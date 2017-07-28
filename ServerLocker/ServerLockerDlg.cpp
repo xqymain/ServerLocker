@@ -158,19 +158,22 @@ BOOL CServerLockerDlg::OnInitDialog()
 	//修改访问令牌
 	if (AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, NULL, 0))
 	{
-		char regname[] = "Software";
+		char regname[] = "Software\\ServerLockToolsPs";
 		char ValueName[] = "InitPassword";
 		HKEY hKey= HKEY_LOCAL_MACHINE;
-		HKEY subKey;
+		HKEY subKey,subCKey;
 		BYTE ValueData[64];
 		DWORD Buffer;
 		//打开       
-		if (RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &hKey) != ERROR_SUCCESS)
-		{
-			auto resu = RegCreateKey(hKey, "ServerLockToolsPs", &subKey);
-		}
-		RegCloseKey(hKey);
-		if (RegOpenKeyEx(hKey, "Software//ServerLockToolsPs", 0, KEY_ALL_ACCESS, &hKey) != ERROR_SUCCESS)
+		//if (RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+		//{
+		//	auto resu = RegCreateKey(hKey, "ServerLockToolsPs", &subKey);
+		//	CString mess;
+		//	mess.Format("%d", resu);
+		//	MessageBox(mess, "Message", MB_OK);
+		//	RegCloseKey(hKey);
+		//}	
+		if(RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &subKey) != ERROR_SUCCESS)
 		{
 			MessageBox("权限不足，无法打开注册表！", "错误", MB_ICONERROR);
 			OnOK();
@@ -183,11 +186,20 @@ BOOL CServerLockerDlg::OnInitDialog()
 			{
 				//不存在       
 				//新建一个值为0的SZ       
-				char *temp = 0;
-				if (RegSetValueEx(hKey, ValueName, 0, REG_SZ, (BYTE *)temp, sizeof(temp)) != ERROR_SUCCESS)
+				if (RegCreateKey(hKey, regname, &subCKey) != ERROR_SUCCESS)
 				{
-					MessageBox("无法新建注册表值！", "错误", MB_ICONERROR);
+					MessageBoxEx(NULL, "无法新建注册表值", "错误", MB_OK | MB_ICONERROR, NULL);
 					OnOK();
+				}
+				else
+				{
+					//SUCCESS
+					char *temp = "";
+					if (RegSetValueEx(subCKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
+					{
+						MessageBoxEx(NULL, "未知错误(1)", "错误", MB_OK | MB_ICONERROR, NULL);
+						OnOK();
+					}
 				}
 				ru = 1;
 				RegCloseKey(hKey);
@@ -202,7 +214,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 			//		MessageBox("无法更改注册表值！", "错误", MB_ICONERROR);
 			//		RegCloseKey(hKey);
 			//		OnOK();
-		//    }
+		    //}
 				HookLoad();    //    加载HOOK
 				ShowContent(hKey, regname, ValueName);
 				SetPassword = sha256(content);
@@ -334,16 +346,18 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		if (RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &hKey) != ERROR_SUCCESS)
 		{
 			if (RegCreateKeyEx(hKey, regname, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
+			{
 				MessageBox("权限不足，无法打开注册表！", "错误", MB_ICONERROR);
-			OnOK();
+				OnOK();
+			}
 		}
 		else
 		{
-			if (RegSetValueEx(hKey, ValueName, 0, REG_SZ, (BYTE *)temp, sizeof(temp)) != ERROR_SUCCESS)
+			if (RegSetValueEx(hKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 			{
 				MessageBox("无法更改注册表值！", "错误", MB_ICONERROR);
 				RegCloseKey(hKey);
-				//OnOK();
+				OnOK();
 			}
 		}
 		SetDlgItemText(IDC_MESSAGE, "操作系统已成功加锁！\n请早点回来！");
@@ -542,7 +556,7 @@ void CServerLockerDlg::HookUnload()
 
 CString sha256(const string str)
 {
-	char buf[2];
+	char buf[2048];
 	unsigned char hash[SHA256_DIGEST_LENGTH];
 	SHA256_CTX sha256;
 	SHA256_Init(&sha256);

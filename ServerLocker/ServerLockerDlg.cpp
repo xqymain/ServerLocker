@@ -45,7 +45,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 //
 int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName);
-CString sha256(const string str);
+string sha256(const string str);
 BOOL installhook();
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -217,8 +217,8 @@ BOOL CServerLockerDlg::OnInitDialog()
 		    //}
 				HookLoad();    //    加载HOOK
 				ShowContent(hKey, regname, ValueName);
-				SetPassword = sha256(content);
-				ConfirmPassword = SetPassword;
+				string stemp = sha256(content);
+				ConfirmPassword = SetPassword = stemp.c_str();
 				SetDlgItemText(IDC_MESSAGE, "因上次未解除锁定\n请验证您上次设置的密码!");
 				SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1);
 				SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 1);
@@ -336,8 +336,8 @@ void CServerLockerDlg::OnBnClickedSetlock()
 			return;
 		}
 		char *temp = SetPassword.GetBuffer(SetPassword.GetLength());
-		ConfirmPassword = SetPassword = sha256(temp);
 		string stemp = sha256(temp);
+		ConfirmPassword = SetPassword = stemp.c_str();
 		const char *ctemp = stemp.c_str();
 		strcpy(temp, ctemp);
 		char regname[] = "Software\\ServerLockToolsPs";
@@ -554,19 +554,22 @@ void CServerLockerDlg::HookUnload()
 
 }
 
-CString sha256(const string str)
+string sha256(const string str)
 {
-	char buf[2048];
+	char buf[65];
 	unsigned char hash[SHA256_DIGEST_LENGTH];
 	SHA256_CTX sha256;
 	SHA256_Init(&sha256);
 	SHA256_Update(&sha256, str.c_str(), str.size());
 	SHA256_Final(hash, &sha256);
-	CString NewString = "";
+	string NewString = "";
 	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
 	{
 		sprintf(buf, "%02x", hash[i]);
 		NewString = NewString + buf;
 	}
+	//CString ctemp;
+	//ctemp = NewString.c_str();
+	//MessageBox(NULL, ctemp, "Message", MB_OK);
 	return NewString;
 }

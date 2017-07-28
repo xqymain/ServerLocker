@@ -1,15 +1,15 @@
-// ServerLockToolsPsDlg.h : 头文件
+// ServerLockerDlg.h : 头文件
 //
 
 #pragma once
 
 
-// CServerLockToolsPsDlg 对话框
-class CServerLockToolsPsDlg : public CDialogEx
+// CServerLockerDlg 对话框
+class CServerLockerDlg : public CDialogEx
 {
 // 构造
 public:
-	CServerLockToolsPsDlg(CWnd* pParent = NULL);	// 标准构造函数
+	CServerLockerDlg(CWnd* pParent = NULL);	// 标准构造函数
 
 // 对话框数据
 	enum { IDD = IDD_SERVERLOCKTOOLSPS_DIALOG };

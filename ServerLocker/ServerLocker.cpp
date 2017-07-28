@@ -3,8 +3,9 @@
 //
 
 #include "stdafx.h"
-#include "ServerLockToolsPs.h"
-#include "ServerLockToolsPsDlg.h"
+#include "ServerLocker.h"
+#include "ServerLockerDlg.h"
+#include "ServerLocker.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -13,14 +14,14 @@
 
 // CServerLockToolsPsApp
 
-BEGIN_MESSAGE_MAP(CServerLockToolsPsApp, CWinApp)
+BEGIN_MESSAGE_MAP(CServerLockerApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
 // CServerLockToolsPsApp 构造
 
-CServerLockToolsPsApp::CServerLockToolsPsApp()
+CServerLockerApp::CServerLockerApp()
 {
 	// 支持重新启动管理器
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
@@ -32,12 +33,12 @@ CServerLockToolsPsApp::CServerLockToolsPsApp()
 
 // 唯一的一个 CServerLockToolsPsApp 对象
 
-CServerLockToolsPsApp theApp;
+CServerLockerApp theApp;
 
 
 // CServerLockToolsPsApp 初始化
 
-BOOL CServerLockToolsPsApp::InitInstance()
+BOOL CServerLockerApp::InitInstance()
 {
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
@@ -70,7 +71,7 @@ BOOL CServerLockToolsPsApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	CServerLockToolsPsDlg dlg;
+	CServerLockerDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
@@ -100,3 +101,11 @@ BOOL CServerLockToolsPsApp::InitInstance()
 	return FALSE;
 }
 
+CServerLockerApp::CServerLockerApp()
+{
+}
+
+BOOL CServerLockerApp::InitInstance()
+{
+	return 0;
+}

@@ -8,17 +8,17 @@
 	#error "在包含此文件之前包含“stdafx.h”以生成 PCH 文件"
 #endif
 
-#include "resource.h"		// 主符号
+#include "Resource.h"		// 主符号
 
 
-// CServerLockToolsPsApp: 
+// CServerLockerApp: 
 // 有关此类的实现，请参阅 ServerLockToolsPs.cpp
 //
 
-class CServerLockToolsPsApp : public CWinApp
+class CServerLockerApp : public CWinApp
 {
 public:
-	CServerLockToolsPsApp();
+	CServerLockerApp();
 
 // 重写
 public:
@@ -29,4 +29,4 @@ public:
 	DECLARE_MESSAGE_MAP()
 };
 
-extern CServerLockToolsPsApp theApp;
+extern CServerLockerApp theApp;

@@ -3,8 +3,8 @@
 //
 
 #include "stdafx.h"
-#include "ServerLockToolsPs.h"
-#include "ServerLockToolsPsDlg.h"
+#include "ServerLocker.h"
+#include "ServerLockerDlg.h"
 #include "afxdialogex.h"
 #include <iostream>
 #include <windows.h>
@@ -79,32 +79,33 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CServerLockToolsPsDlg 对话框
+// CServerLockerDlg 对话框
 
 
 
-CServerLockToolsPsDlg::CServerLockToolsPsDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CServerLockToolsPsDlg::IDD, pParent)
+CServerLockerDlg::CServerLockerDlg(CWnd* pParent /*=NULL*/)
+	: CDialogEx(CServerLockerDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CServerLockToolsPsDlg::DoDataExchange(CDataExchange* pDX)
+void CServerLockerDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CServerLockToolsPsDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CServerLockerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_SETLOCK, &CServerLockToolsPsDlg::OnBnClickedSetlock)
-	ON_BN_CLICKED(IDC_EXITSYSTEM, &CServerLockToolsPsDlg::OnBnClickedExitsystem)
+	ON_BN_CLICKED(IDC_SETLOCK, &CServerLockerDlg::OnBnClickedSetlock)
+	ON_BN_CLICKED(IDC_EXITSYSTEM, &CServerLockerDlg::OnBnClickedExitsystem)
 END_MESSAGE_MAP()
 
 // CServerLockToolsPsDlg 消息处理程序
 
-BOOL CServerLockToolsPsDlg::OnInitDialog()
+
+BOOL CServerLockerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -247,7 +248,7 @@ BOOL CServerLockToolsPsDlg::OnInitDialog()
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
-void CServerLockToolsPsDlg::OnSysCommand(UINT nID, LPARAM lParam)
+void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
@@ -264,7 +265,7 @@ void CServerLockToolsPsDlg::OnSysCommand(UINT nID, LPARAM lParam)
 //  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
 //  这将由框架自动完成。
 
-void CServerLockToolsPsDlg::OnPaint()
+void CServerLockerDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -291,14 +292,14 @@ void CServerLockToolsPsDlg::OnPaint()
 
 //当用户拖动最小化窗口时系统调用此函数取得光标
 //显示。
-HCURSOR CServerLockToolsPsDlg::OnQueryDragIcon()
+HCURSOR CServerLockerDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
 
 
-void CServerLockToolsPsDlg::OnBnClickedSetlock()
+void CServerLockerDlg::OnBnClickedSetlock()
 {
 	// TODO:  在此添加加锁功能处理程序代码
 	if (user == 0)   //加锁
@@ -399,7 +400,7 @@ void CServerLockToolsPsDlg::OnBnClickedSetlock()
 
 	}
 }
-BOOL CServerLockToolsPsDlg::PreTranslateMessage(MSG * pMsg)
+BOOL CServerLockerDlg::PreTranslateMessage(MSG * pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)
 	{
@@ -417,7 +418,7 @@ BOOL CServerLockToolsPsDlg::PreTranslateMessage(MSG * pMsg)
 
 	return CDialog::PreTranslateMessage(pMsg);
 }
-void CServerLockToolsPsDlg::OnBnClickedExitsystem()
+void CServerLockerDlg::OnBnClickedExitsystem()
 {
 	OnOK();
 }
@@ -472,14 +473,14 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	}
 	return(Discard ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
 }
-void CServerLockToolsPsDlg::OnClose()
+void CServerLockerDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	HookUnload();    // 退出窗口，要卸载HOOK
 	CDialogEx::OnClose();
 }
 
-void CServerLockToolsPsDlg::HookLoad()
+void CServerLockerDlg::HookLoad()
 {
 	m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
 	CString loginfo;
@@ -511,7 +512,7 @@ void CServerLockToolsPsDlg::HookLoad()
 		AfxMessageBox(loginfo);
 	}
 }
-void CServerLockToolsPsDlg::HookUnload()
+void CServerLockerDlg::HookUnload()
 {
 	CString logInfo;
 	if (m_hinstHookDll == NULL)

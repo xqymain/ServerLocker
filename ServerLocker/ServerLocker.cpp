@@ -101,11 +101,3 @@ BOOL CServerLockerApp::InitInstance()
 	return FALSE;
 }
 
-CServerLockerApp::CServerLockerApp()
-{
-}
-
-BOOL CServerLockerApp::InitInstance()
-{
-	return 0;
-}

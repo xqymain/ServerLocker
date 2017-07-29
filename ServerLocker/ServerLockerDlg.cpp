@@ -1,3 +1,4 @@
+
 // ServerLockerDlg.cpp : 实现文件
 //
 
@@ -7,7 +8,7 @@
 #include "afxdialogex.h"
 #include <iostream>
 #include <windows.h>
-#include "openssl/sha.h"
+#include "thirdparty/openssl/sha.h"
 #include <string>
 
 #pragma comment(lib,"libcrypto64MT.lib")
@@ -22,47 +23,48 @@ using namespace std;
 #endif
 
 
-//Declare global variables
+// Declare global variables
 CBrush m_bkbrush;
-int user = 0;		//Determine the user status 0=Unlocked 1=Locked
+int userstatus = 0;    // Unlocked=0 Locked=1
 CString SetPassword;
 CString ConfirmPassword;
 CString UnlockPassword;
 std::wstring strValue;
 int ru=0;
 char *ch;
-char content[256];     //Query the contents of the registry key
-DWORD dwType = REG_SZ; //Define data type
+char content[256];      // Query the contents of the registry key
+DWORD dwType = REG_SZ;  // Define Data Type
 DWORD dwLength = 256;
-struct HKEY__*RootKey; //注册表主键名称
-TCHAR *SubKey;         //欲打开注册表项的地址
-TCHAR *KeyName;        //欲设置项的名字
-TCHAR *ValueName;      //欲设置值的名称
-LPBYTE SetContent_S;   //字符串类型
-CRect rct;             //控制屏幕区域
+struct HKEY__*RootKey;  // Registry Key name
+TCHAR *SubKey;          // To open the address of the registry key
+TCHAR *KeyName;         // To Set the name of the Item
+TCHAR *ValueName;       // To Set the name of the Value
+LPBYTE SetContent_S;    // String Type
+CRect rct;              // Control the Screen Area
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
-
-// 用于应用程序“关于”菜单项的 CAboutDlg 对话框
+// The CAboutDlg dialog box for the application "About" menu item
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// 对话框数据
+// Dialog box data
 	enum { IDD = IDD_ABOUTBOX };
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Support
 
-// 实现
+// Achieve
 protected:
 	DECLARE_MESSAGE_MAP()
 };
 
+
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
 {
+
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
@@ -74,9 +76,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CServerLockerDlg 对话框
-
-
+// CServerLockerDlg Dialog
 
 CServerLockerDlg::CServerLockerDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CServerLockerDlg::IDD, pParent)
@@ -97,16 +97,16 @@ BEGIN_MESSAGE_MAP(CServerLockerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_EXITSYSTEM, &CServerLockerDlg::OnBnClickedExitsystem)
 END_MESSAGE_MAP()
 
-// CServerLockToolsPsDlg 消息处理程序
+// CServerLockerDlg Message handler
 
 
 BOOL CServerLockerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// 将“关于...”菜单项添加到系统菜单中。
+	// Add the "About ..." menu item to the system menu.
 
-	// IDM_ABOUTBOX 必须在系统命令范围内。
+	// IDM_ABOUTBOX Must be within the scope of the system command.
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -124,33 +124,33 @@ BOOL CServerLockerDlg::OnInitDialog()
 		}
 	}
 
-	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
-	//  执行此操作
-	SetIcon(m_hIcon, TRUE);			// 设置大图标
-	SetIcon(m_hIcon, FALSE);		// 设置小图标
+	// Set the icon for this dialog box. When the application main window is not a dialog box, the frame will automatically
+	//  Do this 
+	SetIcon(m_hIcon, TRUE);			// Set big icon
+	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO:  在此添加额外的初始化代码
+	// TODO: Add additional initialization code here
 	
-	//提权
+	// Raise permissions
 
 	HANDLE hToken;
-	//打开当前进程的访问令牌
+	// Open access token for the current process
 	if(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
 	{
 		return FALSE;
 	}
 	TOKEN_PRIVILEGES tkp;
-	//查看当前进程权限
+	// View current process permissions
 
 	if(!LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid))
 	{
 		return FALSE;
 	}
-	//修改特权数组
+	// Modify privilege array
 	tkp.PrivilegeCount = 1;
 	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-	//修改访问令牌
+	// Modify access token
 	if (AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, NULL, 0))
 	{
 		char regname[] = "Software\\ServerLockToolsPs";
@@ -159,40 +159,32 @@ BOOL CServerLockerDlg::OnInitDialog()
 		HKEY subKey,subCKey;
 		BYTE ValueData[64];
 		DWORD Buffer;
-		//打开       
-		//if (RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
-		//{
-		//	auto resu = RegCreateKey(hKey, "ServerLockToolsPs", &subKey);
-		//	CString mess;
-		//	mess.Format("%d", resu);
-		//	MessageBox(mess, "Message", MB_OK);
-		//	RegCloseKey(hKey);
-		//}	
+		// Open Registry    
 		if(RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &subKey) != ERROR_SUCCESS)
 		{
-			MessageBox("权限不足，无法打开注册表！", "错误", MB_ICONERROR);
+			MessageBox("Insufficient permissions to open the registry!", "Error", MB_ICONERROR);
 			OnOK();
 		}
 		else
 		{
-			//读原来的键值       
+			// Read the original key       
 			Buffer = sizeof(ValueData);
 			if (RegQueryValueEx(hKey, ValueName, 0, NULL, ValueData, &Buffer) != ERROR_SUCCESS)
 			{
-				//不存在       
-				//新建一个值为0的SZ       
+				// Not Found      
+				// Create a new SZ with a value of none      
 				if (RegCreateKey(hKey, regname, &subCKey) != ERROR_SUCCESS)
 				{
-					MessageBoxEx(NULL, "无法新建注册表值", "错误", MB_OK | MB_ICONERROR, NULL);
+					MessageBoxEx(NULL, "Can not create new registry value!", "Error", MB_OK | MB_ICONERROR, NULL);
 					OnOK();
 				}
 				else
 				{
-					//SUCCESS
+					// SUCCESS
 					char *temp = "";
 					if (RegSetValueEx(subCKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 					{
-						MessageBoxEx(NULL, "未知错误(1)", "错误", MB_OK | MB_ICONERROR, NULL);
+						MessageBoxEx(NULL, "unknown error(1)", "Error", MB_OK | MB_ICONERROR, NULL);
 						OnOK();
 					}
 				}
@@ -201,7 +193,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 			}
 			else
 			{
-			//	//存在       
+			    //Found       
 			//	//改变值
 			//	DWORD temp = 0;
 			//	if (RegSetValueEx(hKey, ValueName, 0, REG_DWORD, (LPBYTE)&temp, sizeof(DWORD)) != ERROR_SUCCESS)
@@ -210,25 +202,25 @@ BOOL CServerLockerDlg::OnInitDialog()
 			//		RegCloseKey(hKey);
 			//		OnOK();
 		    //}
-				HookLoad();    //    加载HOOK
+				HookLoad();    // Load HOOK
 				ShowContent(hKey, regname, ValueName);
-				string stemp = sha256(content);
+				string stemp = sha512(content);
 				ConfirmPassword = SetPassword = stemp.c_str();
-				SetDlgItemText(IDC_MESSAGE, "因上次未解除锁定\n请验证您上次设置的密码!");
+				SetDlgItemText(IDC_MESSAGE, "Due to last unlocked\n Please verify your last password!");
 				SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1);
 				SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 1);
 				SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
-				SetDlgItemText(IDC_SETLOCK, "系统解锁");
+				SetDlgItemText(IDC_SETLOCK, "System Unlock");
 				SetDlgItemText(IDC_SET, "");
 				SetDlgItemText(IDC_SETAGIN, "");
 				GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(false);
-				user = 1;
-				GetWindowRect(rct); //相对于左上角的屏幕位置
-									//鼠标限制在屏幕上的矩形区域
+				userstatus = 1;
+				GetWindowRect(rct); // Relative to the upper left corner of the screen position
+									// The mouse is limited to a rectangular area on the screen
 				ClipCursor(rct);
-				//把新的系统设置内容写入用户配置文件
+				// Write the new system settings to the user profile
 				SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
-				//操作外壳函数实现
+				// Operation shell function implementation
 				::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_HIDE);
 				GetDlgItem(IDC_UNLOCK)->SetFocus();
 				//HANDLE hThread = CreateThread(NULL, 0, Fun, NULL, 0, NULL);
@@ -238,7 +230,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 	}
 	else
 	{
-		MessageBox("你不具备管理员身份！", "错误", MB_OK|MB_ICONERROR);
+		MessageBox("You aren't an administrator!", "Error", MB_OK|MB_ICONERROR);
 		return FALSE;
 		OnOK();
 	}
@@ -248,9 +240,9 @@ BOOL CServerLockerDlg::OnInitDialog()
 	//{
 	//	return FALSE;
 	//}
-	//禁止控件使用
+	// Disable the use of controls
 	SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
-	//改变子窗口
+	// Change the child window
 	SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -268,19 +260,19 @@ void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// 如果向对话框添加最小化按钮，则需要下面的代码
-//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
-//  这将由框架自动完成。
+//  If you add a minimize button to a dialog box, you need the following code
+//  To draw the icon. For MFC applications that use the Document / View model,
+//  This will be done automatically by the framework.
 
 void CServerLockerDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // 用于绘制的设备上下文
+		CPaintDC dc(this); // Used to draw the device context
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// 使图标在工作区矩形中居中
+		// Make the icon centered in the work area rectangle
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -288,7 +280,7 @@ void CServerLockerDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// 绘制图标
+		// Draw the icon
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -297,8 +289,8 @@ void CServerLockerDlg::OnPaint()
 	}
 }
 
-//当用户拖动最小化窗口时系统调用此函数取得光标
-//显示。
+// The system calls this function to get the cursor when the user drags the minimized window
+// to show.
 HCURSOR CServerLockerDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -308,30 +300,30 @@ HCURSOR CServerLockerDlg::OnQueryDragIcon()
 
 void CServerLockerDlg::OnBnClickedSetlock()
 {
-	// TODO:  在此添加加锁功能处理程序代码
-	if (user == 0)   //加锁
+	// TODO:Add the lock function handler code here
+	if (userstatus == 0)
 	{
-		GetDlgItemText(IDC_SET, SetPassword); //用户输入的密码直接存储至SetPassword
-		GetDlgItemText(IDC_SETAGIN, ConfirmPassword);//把用户输入的确认密码存储至ConfirmPassword
+		GetDlgItemText(IDC_SET, SetPassword); // The password entered by the user is stored directly into SetPassword
+		GetDlgItemText(IDC_SETAGIN, ConfirmPassword);// Store the confirmation password entered by the user to ConfirmPassword
 		if (SetPassword != ConfirmPassword)
 		{
-			SetDlgItemText(IDC_MESSAGE, "两次密码不一致！\n无法成功加锁!");
+			SetDlgItemText(IDC_MESSAGE, "Two passwords are inconsistent!\nCan not be successfully locked!");
 			SetDlgItemText(IDC_SET, "");
 			SetDlgItemText(IDC_SETAGIN, "");
 
-			//把光标直接定位到输入IDC_SET控件
+			// Position the cursor directly into the input IDC_SET control
 			GetDlgItem(IDC_SET)->SetFocus();
 			return;
 		}
-		if (SetPassword == "")//判断是否为空密码
+		if (SetPassword == "")// To determine whether it is empty password
 		{
-			SetDlgItemText(IDC_MESSAGE, "密码不能为空！\n这是否是有意的？");
-			//把光标直接定位到输入IDC_SET控件
+			SetDlgItemText(IDC_MESSAGE, "Password can not be blank!\nWas it intentional?");
+			// Position the cursor directly into the input IDC_SET control
 			GetDlgItem(IDC_SET)->SetFocus();
 			return;
 		}
 		char *temp = SetPassword.GetBuffer(SetPassword.GetLength());
-		string stemp = sha256(temp);
+		string stemp = sha512(temp);
 		ConfirmPassword = SetPassword = stemp.c_str();
 		const char *ctemp = stemp.c_str();
 		strcpy(temp, ctemp);
@@ -342,7 +334,7 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		{
 			if (RegCreateKeyEx(hKey, regname, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
 			{
-				MessageBox("权限不足，无法打开注册表！", "错误", MB_ICONERROR);
+				MessageBox("Insufficient permissions to open the registry!", "Error", MB_ICONERROR);
 				OnOK();
 			}
 		}
@@ -350,59 +342,59 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		{
 			if (RegSetValueEx(hKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 			{
-				MessageBox("无法更改注册表值！", "错误", MB_ICONERROR);
+				MessageBox("Can not change the registry value!", "Error", MB_ICONERROR);
 				RegCloseKey(hKey);
 				OnOK();
 			}
 		}
-		SetDlgItemText(IDC_MESSAGE, "操作系统已成功加锁！\n请早点回来！");
+		SetDlgItemText(IDC_MESSAGE, "Operating system has been successfully locked!\nPlease come back early!");
 		SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1); 
 		SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 1);
 		SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
-		SetDlgItemText(IDC_SETLOCK, "系统解锁");
+		SetDlgItemText(IDC_SETLOCK, "System Unlock");
 		SetDlgItemText(IDC_SET, "");
 		SetDlgItemText(IDC_SETAGIN, "");
 		GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(false);
-		user = 1;
-		GetWindowRect(rct); //相对于左上角的屏幕位置
-		//鼠标限制在屏幕上的矩形区域
+		userstatus = 1;
+		GetWindowRect(rct); // Relative to the upper left corner of the screen position
+		// Limit the mouse to a rectangular area on the screen
 		ClipCursor(rct);
-		//把新的系统设置内容写入用户配置文件
+		// Write the new system settings to the user profile
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
-		//操作外壳函数实现
+		// Operation shell function implementation
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_HIDE);
 		GetDlgItem(IDC_UNLOCK)->SetFocus();
 		return;
 	}
 
-	if (user == 1)   //解锁
+	if (userstatus == 1)   //Unlock
 	{
 		GetDlgItemText(IDC_UNLOCK, UnlockPassword);
 		char *temp = UnlockPassword.GetBuffer(UnlockPassword.GetLength());
-		string stemp = sha256(temp);
+		string stemp = sha512(temp);
 		UnlockPassword = stemp.c_str();
 		if (SetPassword != UnlockPassword)
 		{
-			SetDlgItemText(IDC_MESSAGE, "解锁密码输入错误！\n无法正确解锁！");
+			SetDlgItemText(IDC_MESSAGE, "Unlock password input error!\nUnable to unlock!");
 			SetDlgItemText(IDC_UNLOCK, "");
-			GetDlgItem(IDC_UNLOCK)->SetFocus(); //鼠标定位
+			GetDlgItem(IDC_UNLOCK)->SetFocus(); // Cursor positioning
 			return;
 		}
-		if (SetPassword == "")//判断是否为空密码
+		if (SetPassword == "")// To determine whether it is empty password
 		{
-			SetDlgItemText(IDC_MESSAGE, "解锁密码不能为空！\n这是否是有意的？");
-			//把光标直接定位到输入IDC_UNLOCK控件
+			SetDlgItemText(IDC_MESSAGE, "Unlock password can not be empty!\nIs this intentional?");
+			// Position the cursor directly into the input IDC_UNLOCK control
 			GetDlgItem(IDC_UNLOCK)->SetFocus();
 			return;
 		}
-		SetDlgItemText(IDC_MESSAGE, "解锁成功！\n不用我帮忙？");
+		SetDlgItemText(IDC_MESSAGE, "Unlock success!\nDo not I help?");
 		SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 0);
 		SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 0);
 		SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
-		SetDlgItemText(IDC_SETLOCK, "实现加锁");
+		SetDlgItemText(IDC_SETLOCK, "Achieve lock");
 		SetDlgItemText(IDC_UNLOCK, "");
 		GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(true);
-		user = 0;
+		userstatus = 0;
 		ClipCursor(NULL);
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, false, 0,SPIF_UPDATEINIFILE);
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_SHOW);
@@ -413,7 +405,7 @@ BOOL CServerLockerDlg::PreTranslateMessage(MSG * pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)
 	{
-		//屏蔽指定按键  
+		// Shield the specified button 
 		switch (pMsg->wParam)
 		{
 		case VK_ESCAPE:
@@ -434,19 +426,19 @@ void CServerLockerDlg::OnBnClickedExitsystem()
 int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName)
 {
 	HKEY hKey = HKEY_LOCAL_MACHINE;
-	int i = 0; //操作结果：0==succeed
+	int i = 0; // Operation results:0==succeed
 	if (RegOpenKeyEx(hKey, ReSubKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueEx(hKey, ReValueName, NULL, &dwType, (unsigned char *)content, &dwLength) != ERROR_SUCCESS)
 		{
-			AfxMessageBox("错误：无法查询有关的注册表信息");
+			AfxMessageBox("Error: Can not query the relevant registry information");
 			i = 1;
 		}
 		RegCloseKey(hKey);
 	}
 	else
 	{
-		AfxMessageBox("错误：无法打开有关的hKEY");
+		AfxMessageBox("Error: unable to open the relevant hKey");
 		i = 1;
 	}
 	return i;
@@ -484,8 +476,8 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 }
 void CServerLockerDlg::OnClose()
 {
-	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	HookUnload();    // 退出窗口，要卸载HOOK
+	// TODO: Add the message handler code here and / or call the default value
+	HookUnload();    // Exit the window to uninstall HOOK
 	CDialogEx::OnClose();
 }
 
@@ -496,7 +488,7 @@ void CServerLockerDlg::HookLoad()
 
 	if (NULL == m_hinstHookDll)
 	{
-		loginfo.Format(_T("加载 MonitorDll.dll失败，错误代码 = [%d] "), GetLastError());
+		loginfo.Format(_T("Load MonitorDll.dll failed with error code = [%d] "), GetLastError());
 		AfxMessageBox(loginfo);
 		return;
 	}
@@ -507,17 +499,17 @@ void CServerLockerDlg::HookLoad()
 	loadMonitor = (LoadMonitor)::GetProcAddress(m_hinstHookDll, "HookLoad");
 	if (NULL == loadMonitor)
 	{
-		loginfo.Format(_T("获取函数 HookLoad 失败，错误代码 = [%d]"), GetLastError());
+		loginfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
 		AfxMessageBox(loginfo);
 	}
 	if (loadMonitor(m_hWnd, GetCurrentProcessId()))
 	{
-		loginfo.Format(_T("HOOK加载成功"));
+		loginfo.Format(_T("HOOK loaded successfully"));
 		AfxMessageBox(loginfo);
 	}
 	else
 	{
-		loginfo.Format(_T("HOOK加载失败"));
+		loginfo.Format(_T("HOOK loading failed!"));
 		AfxMessageBox(loginfo);
 	}
 }
@@ -529,7 +521,7 @@ void CServerLockerDlg::HookUnload()
 		m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
 		if (NULL == m_hinstHookDll)
 		{
-			logInfo.Format(_T("加载 MonitorDll.dll失败，错误代码 = [%d]"), GetLastError());
+			logInfo.Format(_T("Load MonitorDll.dll failed with error code = [%d]"), GetLastError());
 			AfxMessageBox(logInfo);
 			return;
 		}
@@ -540,7 +532,7 @@ void CServerLockerDlg::HookUnload()
 	unloadHook = (UnloadHook)::GetProcAddress(m_hinstHookDll, "HookUnload");
 	if (NULL == unloadHook)
 	{
-		logInfo.Format(_T("获取函数 HookUnload 失败，错误代码 = [%d]"), GetLastError());
+		logInfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
 		AfxMessageBox(logInfo);
 		return;
 	}
@@ -549,16 +541,16 @@ void CServerLockerDlg::HookUnload()
 
 }
 
-string sha256(const string str)
+string sha512(const string str)
 {
-	char buf[65];
-	unsigned char hash[SHA256_DIGEST_LENGTH];
-	SHA256_CTX sha256;
-	SHA256_Init(&sha256);
-	SHA256_Update(&sha256, str.c_str(), str.size());
-	SHA256_Final(hash, &sha256);
+	char buf[129];
+	unsigned char hash[SHA512_DIGEST_LENGTH];
+	SHA512_CTX sha512;
+	SHA512_Init(&sha512);
+	SHA512_Update(&sha512, str.c_str(), str.size());
+	SHA512_Final(hash, &sha512);
 	string NewString = "";
-	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+	for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
 	{
 		sprintf(buf, "%02x", hash[i]);
 		NewString = NewString + buf;

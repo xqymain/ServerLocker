@@ -1,5 +1,5 @@
 
-// ServerLockerDlg.cpp : ÊµÏÖÎÄ¼ş
+// ServerLockerDlg.cpp : å®ç°æ–‡ä»¶
 //
 
 #include "stdafx.h"
@@ -194,11 +194,11 @@ BOOL CServerLockerDlg::OnInitDialog()
 			else
 			{
 			    //Found       
-			//	//¸Ä±äÖµ
+			//	//æ”¹å˜å€¼
 			//	DWORD temp = 0;
 			//	if (RegSetValueEx(hKey, ValueName, 0, REG_DWORD, (LPBYTE)&temp, sizeof(DWORD)) != ERROR_SUCCESS)
 			//	{
-			//		MessageBox("ÎŞ·¨¸ü¸Ä×¢²á±íÖµ£¡", "´íÎó", MB_ICONERROR);
+			//		MessageBox("æ— æ³•æ›´æ”¹æ³¨å†Œè¡¨å€¼ï¼", "é”™è¯¯", MB_ICONERROR);
 			//		RegCloseKey(hKey);
 			//		OnOK();
 		    //}
@@ -235,7 +235,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 		OnOK();
 	}
 
-	////ÖØÆô
+	////é‡å¯
 	//if (!ExitWindowsEx(EWX_REBOOT | EWX_FORCE, 0))
 	//{
 	//	return FALSE;
@@ -244,7 +244,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 	SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
 	// Change the child window
 	SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	return TRUE;  // ³ı·Ç½«½¹µãÉèÖÃµ½¿Ø¼ş£¬·ñÔò·µ»Ø TRUE
+	return TRUE;  // é™¤éå°†ç„¦ç‚¹è®¾ç½®åˆ°æ§ä»¶ï¼Œå¦åˆ™è¿”å› TRUE
 }
 
 void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)

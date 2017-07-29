@@ -1,5 +1,4 @@
-
-// ServerLockToolsPsDlg.cpp : ÊµÏÖÎÄ¼ş
+// ServerLockerDlg.cpp : å®ç°æ–‡ä»¶
 //
 
 #include "stdafx.h"
@@ -23,45 +22,41 @@ using namespace std;
 #endif
 
 
-//ÉùÃ÷È«¾Ö±äÁ¿
-CBrush m_bkbrush;    //»­Ë¢
-int user = 0;//ÅĞ¶ÏÓÃ»§×´Ì¬ ¼ÓËø ½âËø
-CString SetPassword;   //ÉèÖÃÃÜÂë
-CString ConfirmPassword;   //È·ÈÏÃÜÂë
-CString UnlockPassword;   //½âËøÃÜÂë
+//Declare global variables
+CBrush m_bkbrush;
+int user = 0;		//Determine the user status 0=Unlocked 1=Locked
+CString SetPassword;
+CString ConfirmPassword;
+CString UnlockPassword;
 std::wstring strValue;
 int ru=0;
 char *ch;
-char content[256]; //Ëù²éÑ¯×¢²á±í¼üÖµµÄÄÚÈİ
-DWORD dwType = REG_SZ; //¶¨Òå¶ÁÈ¡Êı¾İÀàĞÍ
+char content[256];     //Query the contents of the registry key
+DWORD dwType = REG_SZ; //Define data type
 DWORD dwLength = 256;
-struct HKEY__*RootKey; //×¢²á±íÖ÷¼üÃû³Æ
-TCHAR *SubKey; //Óû´ò¿ª×¢²á±íÏîµÄµØÖ·
-TCHAR *KeyName; //ÓûÉèÖÃÏîµÄÃû×Ö
-TCHAR *ValueName; //ÓûÉèÖÃÖµµÄÃû³Æ
-LPBYTE SetContent_S; //×Ö·û´®ÀàĞÍ
-CRect rct; //¿ØÖÆÆÁÄ»ÇøÓò
+struct HKEY__*RootKey; //æ³¨å†Œè¡¨ä¸»é”®åç§°
+TCHAR *SubKey;         //æ¬²æ‰“å¼€æ³¨å†Œè¡¨é¡¹çš„åœ°å€
+TCHAR *KeyName;        //æ¬²è®¾ç½®é¡¹çš„åå­—
+TCHAR *ValueName;      //æ¬²è®¾ç½®å€¼çš„åç§°
+LPBYTE SetContent_S;   //å­—ç¬¦ä¸²ç±»å‹
+CRect rct;             //æ§åˆ¶å±å¹•åŒºåŸŸ
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
-//
-int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName);
-string sha256(const string str);
-BOOL installhook();
 
-// ÓÃÓÚÓ¦ÓÃ³ÌĞò¡°¹ØÓÚ¡±²Ëµ¥ÏîµÄ CAboutDlg ¶Ô»°¿ò
+// ç”¨äºåº”ç”¨ç¨‹åºâ€œå…³äºâ€èœå•é¡¹çš„ CAboutDlg å¯¹è¯æ¡†
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// ¶Ô»°¿òÊı¾İ
+// å¯¹è¯æ¡†æ•°æ®
 	enum { IDD = IDD_ABOUTBOX };
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV æ”¯æŒ
 
-// ÊµÏÖ
+// å®ç°
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -79,7 +74,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CServerLockerDlg ¶Ô»°¿ò
+// CServerLockerDlg å¯¹è¯æ¡†
 
 
 
@@ -102,16 +97,16 @@ BEGIN_MESSAGE_MAP(CServerLockerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_EXITSYSTEM, &CServerLockerDlg::OnBnClickedExitsystem)
 END_MESSAGE_MAP()
 
-// CServerLockToolsPsDlg ÏûÏ¢´¦Àí³ÌĞò
+// CServerLockToolsPsDlg æ¶ˆæ¯å¤„ç†ç¨‹åº
 
 
 BOOL CServerLockerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// ½«¡°¹ØÓÚ...¡±²Ëµ¥ÏîÌí¼Óµ½ÏµÍ³²Ëµ¥ÖĞ¡£
+	// å°†â€œå…³äº...â€èœå•é¡¹æ·»åŠ åˆ°ç³»ç»Ÿèœå•ä¸­ã€‚
 
-	// IDM_ABOUTBOX ±ØĞëÔÚÏµÍ³ÃüÁî·¶Î§ÄÚ¡£
+	// IDM_ABOUTBOX å¿…é¡»åœ¨ç³»ç»Ÿå‘½ä»¤èŒƒå›´å†…ã€‚
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -129,33 +124,33 @@ BOOL CServerLockerDlg::OnInitDialog()
 		}
 	}
 
-	// ÉèÖÃ´Ë¶Ô»°¿òµÄÍ¼±ê¡£  µ±Ó¦ÓÃ³ÌĞòÖ÷´°¿Ú²»ÊÇ¶Ô»°¿òÊ±£¬¿ò¼Ü½«×Ô¶¯
-	//  Ö´ĞĞ´Ë²Ù×÷
-	SetIcon(m_hIcon, TRUE);			// ÉèÖÃ´óÍ¼±ê
-	SetIcon(m_hIcon, FALSE);		// ÉèÖÃĞ¡Í¼±ê
+	// è®¾ç½®æ­¤å¯¹è¯æ¡†çš„å›¾æ ‡ã€‚  å½“åº”ç”¨ç¨‹åºä¸»çª—å£ä¸æ˜¯å¯¹è¯æ¡†æ—¶ï¼Œæ¡†æ¶å°†è‡ªåŠ¨
+	//  æ‰§è¡Œæ­¤æ“ä½œ
+	SetIcon(m_hIcon, TRUE);			// è®¾ç½®å¤§å›¾æ ‡
+	SetIcon(m_hIcon, FALSE);		// è®¾ç½®å°å›¾æ ‡
 
-	// TODO:  ÔÚ´ËÌí¼Ó¶îÍâµÄ³õÊ¼»¯´úÂë
+	// TODO:  åœ¨æ­¤æ·»åŠ é¢å¤–çš„åˆå§‹åŒ–ä»£ç 
 	
-	//ÌáÈ¨
+	//ææƒ
 
 	HANDLE hToken;
-	//´ò¿ªµ±Ç°½ø³ÌµÄ·ÃÎÊÁîÅÆ
+	//æ‰“å¼€å½“å‰è¿›ç¨‹çš„è®¿é—®ä»¤ç‰Œ
 	if(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
 	{
 		return FALSE;
 	}
 	TOKEN_PRIVILEGES tkp;
-	//²é¿´µ±Ç°½ø³ÌÈ¨ÏŞ
+	//æŸ¥çœ‹å½“å‰è¿›ç¨‹æƒé™
 
 	if(!LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid))
 	{
 		return FALSE;
 	}
-	//ĞŞ¸ÄÌØÈ¨Êı×é
+	//ä¿®æ”¹ç‰¹æƒæ•°ç»„
 	tkp.PrivilegeCount = 1;
 	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-	//ĞŞ¸Ä·ÃÎÊÁîÅÆ
+	//ä¿®æ”¹è®¿é—®ä»¤ç‰Œ
 	if (AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, NULL, 0))
 	{
 		char regname[] = "Software\\ServerLockToolsPs";
@@ -164,7 +159,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 		HKEY subKey,subCKey;
 		BYTE ValueData[64];
 		DWORD Buffer;
-		//´ò¿ª       
+		//æ‰“å¼€       
 		//if (RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
 		//{
 		//	auto resu = RegCreateKey(hKey, "ServerLockToolsPs", &subKey);
@@ -175,20 +170,20 @@ BOOL CServerLockerDlg::OnInitDialog()
 		//}	
 		if(RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &subKey) != ERROR_SUCCESS)
 		{
-			MessageBox("È¨ÏŞ²»×ã£¬ÎŞ·¨´ò¿ª×¢²á±í£¡", "´íÎó", MB_ICONERROR);
+			MessageBox("æƒé™ä¸è¶³ï¼Œæ— æ³•æ‰“å¼€æ³¨å†Œè¡¨ï¼", "é”™è¯¯", MB_ICONERROR);
 			OnOK();
 		}
 		else
 		{
-			//¶ÁÔ­À´µÄ¼üÖµ       
+			//è¯»åŸæ¥çš„é”®å€¼       
 			Buffer = sizeof(ValueData);
 			if (RegQueryValueEx(hKey, ValueName, 0, NULL, ValueData, &Buffer) != ERROR_SUCCESS)
 			{
-				//²»´æÔÚ       
-				//ĞÂ½¨Ò»¸öÖµÎª0µÄSZ       
+				//ä¸å­˜åœ¨       
+				//æ–°å»ºä¸€ä¸ªå€¼ä¸º0çš„SZ       
 				if (RegCreateKey(hKey, regname, &subCKey) != ERROR_SUCCESS)
 				{
-					MessageBoxEx(NULL, "ÎŞ·¨ĞÂ½¨×¢²á±íÖµ", "´íÎó", MB_OK | MB_ICONERROR, NULL);
+					MessageBoxEx(NULL, "æ— æ³•æ–°å»ºæ³¨å†Œè¡¨å€¼", "é”™è¯¯", MB_OK | MB_ICONERROR, NULL);
 					OnOK();
 				}
 				else
@@ -197,7 +192,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 					char *temp = "";
 					if (RegSetValueEx(subCKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 					{
-						MessageBoxEx(NULL, "Î´Öª´íÎó(1)", "´íÎó", MB_OK | MB_ICONERROR, NULL);
+						MessageBoxEx(NULL, "æœªçŸ¥é”™è¯¯(1)", "é”™è¯¯", MB_OK | MB_ICONERROR, NULL);
 						OnOK();
 					}
 				}
@@ -206,34 +201,34 @@ BOOL CServerLockerDlg::OnInitDialog()
 			}
 			else
 			{
-			//	//´æÔÚ       
-			//	//¸Ä±äÖµ
+			//	//å­˜åœ¨       
+			//	//æ”¹å˜å€¼
 			//	DWORD temp = 0;
 			//	if (RegSetValueEx(hKey, ValueName, 0, REG_DWORD, (LPBYTE)&temp, sizeof(DWORD)) != ERROR_SUCCESS)
 			//	{
-			//		MessageBox("ÎŞ·¨¸ü¸Ä×¢²á±íÖµ£¡", "´íÎó", MB_ICONERROR);
+			//		MessageBox("æ— æ³•æ›´æ”¹æ³¨å†Œè¡¨å€¼ï¼", "é”™è¯¯", MB_ICONERROR);
 			//		RegCloseKey(hKey);
 			//		OnOK();
 		    //}
-				HookLoad();    //    ¼ÓÔØHOOK
+				HookLoad();    //    åŠ è½½HOOK
 				ShowContent(hKey, regname, ValueName);
 				string stemp = sha256(content);
 				ConfirmPassword = SetPassword = stemp.c_str();
-				SetDlgItemText(IDC_MESSAGE, "ÒòÉÏ´ÎÎ´½â³ıËø¶¨\nÇëÑéÖ¤ÄúÉÏ´ÎÉèÖÃµÄÃÜÂë!");
+				SetDlgItemText(IDC_MESSAGE, "å› ä¸Šæ¬¡æœªè§£é™¤é”å®š\nè¯·éªŒè¯æ‚¨ä¸Šæ¬¡è®¾ç½®çš„å¯†ç !");
 				SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1);
 				SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 1);
 				SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
-				SetDlgItemText(IDC_SETLOCK, "ÏµÍ³½âËø");
+				SetDlgItemText(IDC_SETLOCK, "ç³»ç»Ÿè§£é”");
 				SetDlgItemText(IDC_SET, "");
 				SetDlgItemText(IDC_SETAGIN, "");
 				GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(false);
 				user = 1;
-				GetWindowRect(rct); //Ïà¶ÔÓÚ×óÉÏ½ÇµÄÆÁÄ»Î»ÖÃ
-									//Êó±êÏŞÖÆÔÚÆÁÄ»ÉÏµÄ¾ØĞÎÇøÓò
+				GetWindowRect(rct); //ç›¸å¯¹äºå·¦ä¸Šè§’çš„å±å¹•ä½ç½®
+									//é¼ æ ‡é™åˆ¶åœ¨å±å¹•ä¸Šçš„çŸ©å½¢åŒºåŸŸ
 				ClipCursor(rct);
-				//°ÑĞÂµÄÏµÍ³ÉèÖÃÄÚÈİĞ´ÈëÓÃ»§ÅäÖÃÎÄ¼ş
+				//æŠŠæ–°çš„ç³»ç»Ÿè®¾ç½®å†…å®¹å†™å…¥ç”¨æˆ·é…ç½®æ–‡ä»¶
 				SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
-				//²Ù×÷Íâ¿Çº¯ÊıÊµÏÖ
+				//æ“ä½œå¤–å£³å‡½æ•°å®ç°
 				::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_HIDE);
 				GetDlgItem(IDC_UNLOCK)->SetFocus();
 				//HANDLE hThread = CreateThread(NULL, 0, Fun, NULL, 0, NULL);
@@ -243,21 +238,21 @@ BOOL CServerLockerDlg::OnInitDialog()
 	}
 	else
 	{
-		MessageBox("Äã²»¾ß±¸¹ÜÀíÔ±Éí·İ£¡", "´íÎó", MB_OK|MB_ICONERROR);
+		MessageBox("ä½ ä¸å…·å¤‡ç®¡ç†å‘˜èº«ä»½ï¼", "é”™è¯¯", MB_OK|MB_ICONERROR);
 		return FALSE;
 		OnOK();
 	}
 
-	////ÖØÆô
+	////é‡å¯
 	//if (!ExitWindowsEx(EWX_REBOOT | EWX_FORCE, 0))
 	//{
 	//	return FALSE;
 	//}
-	//½ûÖ¹¿Ø¼şÊ¹ÓÃ
+	//ç¦æ­¢æ§ä»¶ä½¿ç”¨
 	SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
-	//¸Ä±ä×Ó´°¿Ú
+	//æ”¹å˜å­çª—å£
 	SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	return TRUE;  // ³ı·Ç½«½¹µãÉèÖÃµ½¿Ø¼ş£¬·ñÔò·µ»Ø TRUE
+	return TRUE;  // é™¤éå°†ç„¦ç‚¹è®¾ç½®åˆ°æ§ä»¶ï¼Œå¦åˆ™è¿”å› TRUE
 }
 
 void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -273,19 +268,19 @@ void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// Èç¹ûÏò¶Ô»°¿òÌí¼Ó×îĞ¡»¯°´Å¥£¬ÔòĞèÒªÏÂÃæµÄ´úÂë
-//  À´»æÖÆ¸ÃÍ¼±ê¡£  ¶ÔÓÚÊ¹ÓÃÎÄµµ/ÊÓÍ¼Ä£ĞÍµÄ MFC Ó¦ÓÃ³ÌĞò£¬
-//  Õâ½«ÓÉ¿ò¼Ü×Ô¶¯Íê³É¡£
+// å¦‚æœå‘å¯¹è¯æ¡†æ·»åŠ æœ€å°åŒ–æŒ‰é’®ï¼Œåˆ™éœ€è¦ä¸‹é¢çš„ä»£ç 
+//  æ¥ç»˜åˆ¶è¯¥å›¾æ ‡ã€‚  å¯¹äºä½¿ç”¨æ–‡æ¡£/è§†å›¾æ¨¡å‹çš„ MFC åº”ç”¨ç¨‹åºï¼Œ
+//  è¿™å°†ç”±æ¡†æ¶è‡ªåŠ¨å®Œæˆã€‚
 
 void CServerLockerDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // ÓÃÓÚ»æÖÆµÄÉè±¸ÉÏÏÂÎÄ
+		CPaintDC dc(this); // ç”¨äºç»˜åˆ¶çš„è®¾å¤‡ä¸Šä¸‹æ–‡
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Ê¹Í¼±êÔÚ¹¤×÷Çø¾ØĞÎÖĞ¾ÓÖĞ
+		// ä½¿å›¾æ ‡åœ¨å·¥ä½œåŒºçŸ©å½¢ä¸­å±…ä¸­
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -293,7 +288,7 @@ void CServerLockerDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// »æÖÆÍ¼±ê
+		// ç»˜åˆ¶å›¾æ ‡
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -302,8 +297,8 @@ void CServerLockerDlg::OnPaint()
 	}
 }
 
-//µ±ÓÃ»§ÍÏ¶¯×îĞ¡»¯´°¿ÚÊ±ÏµÍ³µ÷ÓÃ´Ëº¯ÊıÈ¡µÃ¹â±ê
-//ÏÔÊ¾¡£
+//å½“ç”¨æˆ·æ‹–åŠ¨æœ€å°åŒ–çª—å£æ—¶ç³»ç»Ÿè°ƒç”¨æ­¤å‡½æ•°å–å¾—å…‰æ ‡
+//æ˜¾ç¤ºã€‚
 HCURSOR CServerLockerDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -313,25 +308,25 @@ HCURSOR CServerLockerDlg::OnQueryDragIcon()
 
 void CServerLockerDlg::OnBnClickedSetlock()
 {
-	// TODO:  ÔÚ´ËÌí¼Ó¼ÓËø¹¦ÄÜ´¦Àí³ÌĞò´úÂë
-	if (user == 0)   //¼ÓËø
+	// TODO:  åœ¨æ­¤æ·»åŠ åŠ é”åŠŸèƒ½å¤„ç†ç¨‹åºä»£ç 
+	if (user == 0)   //åŠ é”
 	{
-		GetDlgItemText(IDC_SET, SetPassword); //ÓÃ»§ÊäÈëµÄÃÜÂëÖ±½Ó´æ´¢ÖÁSetPassword
-		GetDlgItemText(IDC_SETAGIN, ConfirmPassword);//°ÑÓÃ»§ÊäÈëµÄÈ·ÈÏÃÜÂë´æ´¢ÖÁConfirmPassword
+		GetDlgItemText(IDC_SET, SetPassword); //ç”¨æˆ·è¾“å…¥çš„å¯†ç ç›´æ¥å­˜å‚¨è‡³SetPassword
+		GetDlgItemText(IDC_SETAGIN, ConfirmPassword);//æŠŠç”¨æˆ·è¾“å…¥çš„ç¡®è®¤å¯†ç å­˜å‚¨è‡³ConfirmPassword
 		if (SetPassword != ConfirmPassword)
 		{
-			SetDlgItemText(IDC_MESSAGE, "Á½´ÎÃÜÂë²»Ò»ÖÂ£¡\nÎŞ·¨³É¹¦¼ÓËø!");
+			SetDlgItemText(IDC_MESSAGE, "ä¸¤æ¬¡å¯†ç ä¸ä¸€è‡´ï¼\næ— æ³•æˆåŠŸåŠ é”!");
 			SetDlgItemText(IDC_SET, "");
 			SetDlgItemText(IDC_SETAGIN, "");
 
-			//°Ñ¹â±êÖ±½Ó¶¨Î»µ½ÊäÈëIDC_SET¿Ø¼ş
+			//æŠŠå…‰æ ‡ç›´æ¥å®šä½åˆ°è¾“å…¥IDC_SETæ§ä»¶
 			GetDlgItem(IDC_SET)->SetFocus();
 			return;
 		}
-		if (SetPassword == "")//ÅĞ¶ÏÊÇ·ñÎª¿ÕÃÜÂë
+		if (SetPassword == "")//åˆ¤æ–­æ˜¯å¦ä¸ºç©ºå¯†ç 
 		{
-			SetDlgItemText(IDC_MESSAGE, "ÃÜÂë²»ÄÜÎª¿Õ£¡\nÕâÊÇ·ñÊÇÓĞÒâµÄ£¿");
-			//°Ñ¹â±êÖ±½Ó¶¨Î»µ½ÊäÈëIDC_SET¿Ø¼ş
+			SetDlgItemText(IDC_MESSAGE, "å¯†ç ä¸èƒ½ä¸ºç©ºï¼\nè¿™æ˜¯å¦æ˜¯æœ‰æ„çš„ï¼Ÿ");
+			//æŠŠå…‰æ ‡ç›´æ¥å®šä½åˆ°è¾“å…¥IDC_SETæ§ä»¶
 			GetDlgItem(IDC_SET)->SetFocus();
 			return;
 		}
@@ -347,7 +342,7 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		{
 			if (RegCreateKeyEx(hKey, regname, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
 			{
-				MessageBox("È¨ÏŞ²»×ã£¬ÎŞ·¨´ò¿ª×¢²á±í£¡", "´íÎó", MB_ICONERROR);
+				MessageBox("æƒé™ä¸è¶³ï¼Œæ— æ³•æ‰“å¼€æ³¨å†Œè¡¨ï¼", "é”™è¯¯", MB_ICONERROR);
 				OnOK();
 			}
 		}
@@ -355,32 +350,32 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		{
 			if (RegSetValueEx(hKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 			{
-				MessageBox("ÎŞ·¨¸ü¸Ä×¢²á±íÖµ£¡", "´íÎó", MB_ICONERROR);
+				MessageBox("æ— æ³•æ›´æ”¹æ³¨å†Œè¡¨å€¼ï¼", "é”™è¯¯", MB_ICONERROR);
 				RegCloseKey(hKey);
 				OnOK();
 			}
 		}
-		SetDlgItemText(IDC_MESSAGE, "²Ù×÷ÏµÍ³ÒÑ³É¹¦¼ÓËø£¡\nÇëÔçµã»ØÀ´£¡");
+		SetDlgItemText(IDC_MESSAGE, "æ“ä½œç³»ç»Ÿå·²æˆåŠŸåŠ é”ï¼\nè¯·æ—©ç‚¹å›æ¥ï¼");
 		SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1); 
 		SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 1);
 		SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
-		SetDlgItemText(IDC_SETLOCK, "ÏµÍ³½âËø");
+		SetDlgItemText(IDC_SETLOCK, "ç³»ç»Ÿè§£é”");
 		SetDlgItemText(IDC_SET, "");
 		SetDlgItemText(IDC_SETAGIN, "");
 		GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(false);
 		user = 1;
-		GetWindowRect(rct); //Ïà¶ÔÓÚ×óÉÏ½ÇµÄÆÁÄ»Î»ÖÃ
-		//Êó±êÏŞÖÆÔÚÆÁÄ»ÉÏµÄ¾ØĞÎÇøÓò
+		GetWindowRect(rct); //ç›¸å¯¹äºå·¦ä¸Šè§’çš„å±å¹•ä½ç½®
+		//é¼ æ ‡é™åˆ¶åœ¨å±å¹•ä¸Šçš„çŸ©å½¢åŒºåŸŸ
 		ClipCursor(rct);
-		//°ÑĞÂµÄÏµÍ³ÉèÖÃÄÚÈİĞ´ÈëÓÃ»§ÅäÖÃÎÄ¼ş
+		//æŠŠæ–°çš„ç³»ç»Ÿè®¾ç½®å†…å®¹å†™å…¥ç”¨æˆ·é…ç½®æ–‡ä»¶
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
-		//²Ù×÷Íâ¿Çº¯ÊıÊµÏÖ
+		//æ“ä½œå¤–å£³å‡½æ•°å®ç°
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_HIDE);
 		GetDlgItem(IDC_UNLOCK)->SetFocus();
 		return;
 	}
 
-	if (user == 1)   //½âËø
+	if (user == 1)   //è§£é”
 	{
 		GetDlgItemText(IDC_UNLOCK, UnlockPassword);
 		char *temp = UnlockPassword.GetBuffer(UnlockPassword.GetLength());
@@ -388,23 +383,23 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		UnlockPassword = stemp.c_str();
 		if (SetPassword != UnlockPassword)
 		{
-			SetDlgItemText(IDC_MESSAGE, "½âËøÃÜÂëÊäÈë´íÎó£¡\nÎŞ·¨ÕıÈ·½âËø£¡");
+			SetDlgItemText(IDC_MESSAGE, "è§£é”å¯†ç è¾“å…¥é”™è¯¯ï¼\næ— æ³•æ­£ç¡®è§£é”ï¼");
 			SetDlgItemText(IDC_UNLOCK, "");
-			GetDlgItem(IDC_UNLOCK)->SetFocus(); //Êó±ê¶¨Î»
+			GetDlgItem(IDC_UNLOCK)->SetFocus(); //é¼ æ ‡å®šä½
 			return;
 		}
-		if (SetPassword == "")//ÅĞ¶ÏÊÇ·ñÎª¿ÕÃÜÂë
+		if (SetPassword == "")//åˆ¤æ–­æ˜¯å¦ä¸ºç©ºå¯†ç 
 		{
-			SetDlgItemText(IDC_MESSAGE, "½âËøÃÜÂë²»ÄÜÎª¿Õ£¡\nÕâÊÇ·ñÊÇÓĞÒâµÄ£¿");
-			//°Ñ¹â±êÖ±½Ó¶¨Î»µ½ÊäÈëIDC_UNLOCK¿Ø¼ş
+			SetDlgItemText(IDC_MESSAGE, "è§£é”å¯†ç ä¸èƒ½ä¸ºç©ºï¼\nè¿™æ˜¯å¦æ˜¯æœ‰æ„çš„ï¼Ÿ");
+			//æŠŠå…‰æ ‡ç›´æ¥å®šä½åˆ°è¾“å…¥IDC_UNLOCKæ§ä»¶
 			GetDlgItem(IDC_UNLOCK)->SetFocus();
 			return;
 		}
-		SetDlgItemText(IDC_MESSAGE, "½âËø³É¹¦£¡\n²»ÓÃÎÒ°ïÃ¦£¿");
+		SetDlgItemText(IDC_MESSAGE, "è§£é”æˆåŠŸï¼\nä¸ç”¨æˆ‘å¸®å¿™ï¼Ÿ");
 		SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 0);
 		SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 0);
 		SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
-		SetDlgItemText(IDC_SETLOCK, "ÊµÏÖ¼ÓËø");
+		SetDlgItemText(IDC_SETLOCK, "å®ç°åŠ é”");
 		SetDlgItemText(IDC_UNLOCK, "");
 		GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(true);
 		user = 0;
@@ -418,7 +413,7 @@ BOOL CServerLockerDlg::PreTranslateMessage(MSG * pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)
 	{
-		//ÆÁ±ÎÖ¸¶¨°´¼ü  
+		//å±è”½æŒ‡å®šæŒ‰é”®  
 		switch (pMsg->wParam)
 		{
 		case VK_ESCAPE:
@@ -439,19 +434,19 @@ void CServerLockerDlg::OnBnClickedExitsystem()
 int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName)
 {
 	HKEY hKey = HKEY_LOCAL_MACHINE;
-	int i = 0; //²Ù×÷½á¹û£º0==succeed
+	int i = 0; //æ“ä½œç»“æœï¼š0==succeed
 	if (RegOpenKeyEx(hKey, ReSubKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueEx(hKey, ReValueName, NULL, &dwType, (unsigned char *)content, &dwLength) != ERROR_SUCCESS)
 		{
-			AfxMessageBox("´íÎó£ºÎŞ·¨²éÑ¯ÓĞ¹ØµÄ×¢²á±íĞÅÏ¢");
+			AfxMessageBox("é”™è¯¯ï¼šæ— æ³•æŸ¥è¯¢æœ‰å…³çš„æ³¨å†Œè¡¨ä¿¡æ¯");
 			i = 1;
 		}
 		RegCloseKey(hKey);
 	}
 	else
 	{
-		AfxMessageBox("´íÎó£ºÎŞ·¨´ò¿ªÓĞ¹ØµÄhKEY");
+		AfxMessageBox("é”™è¯¯ï¼šæ— æ³•æ‰“å¼€æœ‰å…³çš„hKEY");
 		i = 1;
 	}
 	return i;
@@ -489,8 +484,8 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 }
 void CServerLockerDlg::OnClose()
 {
-	// TODO: ÔÚ´ËÌí¼ÓÏûÏ¢´¦Àí³ÌĞò´úÂëºÍ/»òµ÷ÓÃÄ¬ÈÏÖµ
-	HookUnload();    // ÍË³ö´°¿Ú£¬ÒªĞ¶ÔØHOOK
+	// TODO: åœ¨æ­¤æ·»åŠ æ¶ˆæ¯å¤„ç†ç¨‹åºä»£ç å’Œ/æˆ–è°ƒç”¨é»˜è®¤å€¼
+	HookUnload();    // é€€å‡ºçª—å£ï¼Œè¦å¸è½½HOOK
 	CDialogEx::OnClose();
 }
 
@@ -501,7 +496,7 @@ void CServerLockerDlg::HookLoad()
 
 	if (NULL == m_hinstHookDll)
 	{
-		loginfo.Format(_T("¼ÓÔØ MonitorDll.dllÊ§°Ü£¬´íÎó´úÂë = [%d] "), GetLastError());
+		loginfo.Format(_T("åŠ è½½ MonitorDll.dllå¤±è´¥ï¼Œé”™è¯¯ä»£ç  = [%d] "), GetLastError());
 		AfxMessageBox(loginfo);
 		return;
 	}
@@ -512,17 +507,17 @@ void CServerLockerDlg::HookLoad()
 	loadMonitor = (LoadMonitor)::GetProcAddress(m_hinstHookDll, "HookLoad");
 	if (NULL == loadMonitor)
 	{
-		loginfo.Format(_T("»ñÈ¡º¯Êı HookLoad Ê§°Ü£¬´íÎó´úÂë = [%d]"), GetLastError());
+		loginfo.Format(_T("è·å–å‡½æ•° HookLoad å¤±è´¥ï¼Œé”™è¯¯ä»£ç  = [%d]"), GetLastError());
 		AfxMessageBox(loginfo);
 	}
 	if (loadMonitor(m_hWnd, GetCurrentProcessId()))
 	{
-		loginfo.Format(_T("HOOK¼ÓÔØ³É¹¦"));
+		loginfo.Format(_T("HOOKåŠ è½½æˆåŠŸ"));
 		AfxMessageBox(loginfo);
 	}
 	else
 	{
-		loginfo.Format(_T("HOOK¼ÓÔØÊ§°Ü"));
+		loginfo.Format(_T("HOOKåŠ è½½å¤±è´¥"));
 		AfxMessageBox(loginfo);
 	}
 }
@@ -534,7 +529,7 @@ void CServerLockerDlg::HookUnload()
 		m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
 		if (NULL == m_hinstHookDll)
 		{
-			logInfo.Format(_T("¼ÓÔØ MonitorDll.dllÊ§°Ü£¬´íÎó´úÂë = [%d]"), GetLastError());
+			logInfo.Format(_T("åŠ è½½ MonitorDll.dllå¤±è´¥ï¼Œé”™è¯¯ä»£ç  = [%d]"), GetLastError());
 			AfxMessageBox(logInfo);
 			return;
 		}
@@ -545,7 +540,7 @@ void CServerLockerDlg::HookUnload()
 	unloadHook = (UnloadHook)::GetProcAddress(m_hinstHookDll, "HookUnload");
 	if (NULL == unloadHook)
 	{
-		logInfo.Format(_T("»ñÈ¡º¯Êı HookUnload Ê§°Ü£¬´íÎó´úÂë = [%d]"), GetLastError());
+		logInfo.Format(_T("è·å–å‡½æ•° HookUnload å¤±è´¥ï¼Œé”™è¯¯ä»£ç  = [%d]"), GetLastError());
 		AfxMessageBox(logInfo);
 		return;
 	}

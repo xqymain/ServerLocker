@@ -6,13 +6,7 @@
 #include "ServerLocker.h"
 #include "ServerLockerDlg.h"
 #include "afxdialogex.h"
-#include <iostream>
-#include <windows.h>
-#include "thirdparty/openssl/sha.h"
-#include <string>
 
-#pragma comment(lib,"libcrypto64MT.lib")
-#pragma comment(lib,"libssl64MT.lib")
 
 using namespace std;
 
@@ -153,7 +147,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 	// Modify access token
 	if (AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, NULL, 0))
 	{
-		char regname[] = "Software\\ServerLockToolsPs";
+		char regname[] = "SOFTWARE\\ServerLockToolsPs";
 		char ValueName[] = "InitPassword";
 		HKEY hKey= HKEY_LOCAL_MACHINE;
 		HKEY subKey,subCKey;
@@ -162,11 +156,21 @@ BOOL CServerLockerDlg::OnInitDialog()
 		// Open Registry    
 		if(RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &subKey) != ERROR_SUCCESS)
 		{
-			MessageBox("Insufficient permissions to open the registry!", "Error", MB_ICONERROR);
-			OnOK();
+			auto backnum = RegOpenKeyEx(hKey, regname, 0, KEY_ALL_ACCESS, &subKey);
+			if (backnum)
+			{
+				CString output;
+				output.Format("You do not have permission to open the registry! Return code:%d", backnum);
+				MessageBox(output, "Error", MB_ICONERROR);
+				OnOK();
+			}
+			else {
+				goto success;
+			}
 		}
 		else
 		{
+			success:
 			// Read the original key       
 			Buffer = sizeof(ValueData);
 			if (RegQueryValueEx(hKey, ValueName, 0, NULL, ValueData, &Buffer) != ERROR_SUCCESS)
@@ -301,6 +305,8 @@ HCURSOR CServerLockerDlg::OnQueryDragIcon()
 void CServerLockerDlg::OnBnClickedSetlock()
 {
 	// TODO:Add the lock function handler code here
+	installhook();
+	HookLoad();
 	if (userstatus == 0)
 	{
 		GetDlgItemText(IDC_SET, SetPassword); // The password entered by the user is stored directly into SetPassword
@@ -396,9 +402,8 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(true);
 		userstatus = 0;
 		ClipCursor(NULL);
-		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, false, 0,SPIF_UPDATEINIFILE);
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_SHOW);
-
+		HookUnload();    // Exit the window to uninstall HOOK
 	}
 }
 BOOL CServerLockerDlg::PreTranslateMessage(MSG * pMsg)
@@ -423,7 +428,7 @@ void CServerLockerDlg::OnBnClickedExitsystem()
 {
 	OnOK();
 }
-int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName)
+int CServerLockerDlg::ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName)
 {
 	HKEY hKey = HKEY_LOCAL_MACHINE;
 	int i = 0; // Operation results:0==succeed
@@ -443,7 +448,7 @@ int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName)
 	}
 	return i;
 }
-BOOL installhook()
+BOOL CServerLockerDlg::installhook()
 {
 	HINSTANCE hins = AfxGetInstanceHandle();
 	HHOOK Hook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardProc, hins, 0);
@@ -477,7 +482,6 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 void CServerLockerDlg::OnClose()
 {
 	// TODO: Add the message handler code here and / or call the default value
-	HookUnload();    // Exit the window to uninstall HOOK
 	CDialogEx::OnClose();
 }
 
@@ -541,9 +545,9 @@ void CServerLockerDlg::HookUnload()
 
 }
 
-string sha512(const string str)
+string CServerLockerDlg::sha512(const string str)
 {
-	char buf[129];
+	char buf[129]; 
 	unsigned char hash[SHA512_DIGEST_LENGTH];
 	SHA512_CTX sha512;
 	SHA512_Init(&sha512);

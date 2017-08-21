@@ -35,13 +35,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ServerLocker.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ServerLockerDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerLocker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

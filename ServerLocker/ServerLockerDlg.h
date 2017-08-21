@@ -1,6 +1,13 @@
 // ServerLockerDlg.h : 头文件
 //
+#include <iostream>
+#include <string>
+#include <windows.h>
+#include "thirdparty/openssl/include/sha.h"
 
+#pragma comment(lib,"thirdparty/openssl/lib/libcrypto64MT.lib")
+
+using namespace std;
 #pragma once
 
 
@@ -22,9 +29,11 @@ public:
 protected:
 	HICON m_hIcon;
 	HINSTANCE m_hinstHookDll;    //    MonitorDll的实例句柄
-	void HookLoad();            //    加载HOOK            
+	void HookLoad();            //    加载HOOK      
+	BOOL installhook();
 	void HookUnload();            //    卸载HOOK
-
+	int ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName);// 注册表查询
+	string sha512(const string str);// SHA512转换
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);

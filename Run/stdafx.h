@@ -7,12 +7,11 @@
 
 #include "targetver.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <tchar.h>
-#include <iostream> 
-#include <Afxwin.h>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <ctime>
 
-// TODO:  在此处引用程序需要的其他头文件
+// TODO: 在此处引用程序需要的其他头文件

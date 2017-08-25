@@ -5,32 +5,55 @@
 #include "SLDaemon.h"
 
 #pragma warning(disable:4996)
+#pragma comment(linker,"/subsystem:\"windows\"  /entry:\"mainCRTStartup\"" )
 
 using namespace std; 
 
+FILE *fFile;
+time_t now;
+CDaemon cd;
+char *runname = "SLDaemon";
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 int main(int argc, char *argv[])
 {
+	ifstream fin("status.log");
+	if (!fin)
+	{
+		char *fileName = "status.log";
+		fFile = fopen(fileName, "w");
+	}
 	STARTUPINFO si;
 	DWORD returnCode;
 	PROCESS_INFORMATION pi;		//进程信息 
 	CString cmd;
-	cmd.Format(L"cmd / c %s", argv[1]);
+	cmd.Format(L"cmd /c %s", argv[1]);
 	LPWSTR lpCmd = cmd.GetBuffer();
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
+	cd.installhook();
+	cd.HookLoad();
 	do {
 		// 创建子进程，判断是否执行成功 
 		if (!CreateProcess(NULL, lpCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 		{
+			now = time(0);
+			fprintf(fFile, "%d[%s] :Failed to create sub-process, Return!",now,runname);
 			return -1;
 		}
-		//进程执行成功，打印进程信息 
+		// 进程执行成功，打印进程信息 
+		now = time(0);
+		fprintf(fFile, "%d[%s] :Process is successful and prints the process information.", now);
 		//cout << "以下是子进程的信息：" << endl;
+		now = time(0);
+		fprintf(fFile, "%d[%s] :Process ID pi.dwProcessID %d.", now, runname, pi.dwProcessId);
 		//cout << "进程ID pi.dwProcessID: " << pi.dwProcessId << endl;
+		now = time(0);
+		fprintf(fFile, "%d[%s] :dwThread ID pi.dwThreadId %d.", now, runname, pi.dwThreadId);
 		//cout << "线程ID pi.dwThreadID : " << pi.dwThreadId << endl;
+		now = time(0);
+		fprintf(fFile, "%d[%s] :Output is finished!", now, runname);
 		// 等待知道子进程退出... 
 		WaitForSingleObject(pi.hProcess, INFINITE);// 检测进程是否停止 
 												   // WaitForSingleObject()函数检查对象的状态，如果是未确定的则等待至超时 
@@ -43,7 +66,14 @@ int main(int argc, char *argv[])
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		if (returnCode == 0)
+		{
+			now = time(0);
+			fprintf(fFile, "%d[%s] :Sub-process normally exits.", now, runname);
+			cd.HookUnload();
 			return 0;
+		}
+		now = time(0);
+		fprintf(fFile, "%d[%s] :Sub-process abnormal exit.", now, runname);
 	} while (true);				// 如果进程退出就再次执行方法 
 }
 
@@ -51,6 +81,8 @@ BOOL CDaemon::installhook()
 {
 	HINSTANCE hins = AfxGetInstanceHandle();
 	HHOOK Hook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardProc, hins, 0);
+	now = time(0);
+	fprintf(fFile, "%d[%s] :Has been hanging in the keyboard hook.", now, runname);
 	return (BOOL)Hook;
 }
 
@@ -87,7 +119,9 @@ void CDaemon::HookLoad()
 
 	if (NULL == m_hinstHookDll)
 	{
-		loginfo.Format(_T("Load MonitorDll.dll failed with error code = [%d] "), GetLastError());
+		loginfo.Format(_T("Load MonitorDll.dll failed with error code = [%d]!"), GetLastError());
+		now = time(0);
+		fprintf(fFile, "%d[%s] :%s", now, runname, loginfo.GetBuffer(0));
 		AfxMessageBox(loginfo);
 		return;
 	}
@@ -99,16 +133,22 @@ void CDaemon::HookLoad()
 	if (NULL == loadMonitor)
 	{
 		loginfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
+		now = time(0);
+		fprintf(fFile, "%d[%s] :%s", now, runname, loginfo.GetBuffer(0));
 		AfxMessageBox(loginfo);
 	}
 	if (loadMonitor(m_hWnd, GetCurrentProcessId()))
 	{
-		loginfo.Format(_T("HOOK loaded successfully"));
+		loginfo.Format(_T("HOOK loaded successfully!"));
+		now = time(0);
+		fprintf(fFile, "%d[%s] :%s", now, runname, loginfo.GetBuffer(0));
 		AfxMessageBox(loginfo);
 	}
 	else
 	{
 		loginfo.Format(_T("HOOK loading failed!"));
+		now = time(0);
+		fprintf(fFile, "%d[%s] :%s", now, runname, loginfo.GetBuffer(0));
 		AfxMessageBox(loginfo);
 	}
 }
@@ -121,6 +161,8 @@ void CDaemon::HookUnload()
 		if (NULL == m_hinstHookDll)
 		{
 			logInfo.Format(_T("Load MonitorDll.dll failed with error code = [%d]"), GetLastError());
+			now = time(0);
+			fprintf(fFile, "%d[%s] :%s", now, runname, logInfo.GetBuffer(0));
 			AfxMessageBox(logInfo);
 			return;
 		}
@@ -132,10 +174,13 @@ void CDaemon::HookUnload()
 	if (NULL == unloadHook)
 	{
 		logInfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
+		now = time(0);
+		fprintf(fFile, "%d[%s] :%s", now, runname, logInfo.GetBuffer(0));
 		AfxMessageBox(logInfo);
 		return;
 	}
-
+	now = time(0);
+	fprintf(fFile, "%d[%s] :%s", now, runname, "Hook was unloaded successfully!");
 	unloadHook();
 
 }

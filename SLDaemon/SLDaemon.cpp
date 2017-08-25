@@ -2,7 +2,12 @@
 //
 
 #include "stdafx.h"
-#pragma comment(linker,"/subsystem:\"windows\"  /entry:\"mainCRTStartup\"" )
+#include "SLDaemon.h"
+
+HINSTANCE m_hinstHookDll;    //    MonitorDll的实例句柄
+void HookLoad();            //    加载HOOK      
+BOOL installhook();
+void HookUnload();            //    卸载HOOK
 
 using namespace std; 
 
@@ -43,3 +48,95 @@ int main(int argc, char *argv[])
 	} while (true);				// 如果进程退出就再次执行方法 
 }
 
+BOOL installhook()
+{
+	HINSTANCE hins = AfxGetInstanceHandle();
+	HHOOK Hook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardProc, hins, 0);
+	return (BOOL)Hook;
+}
+
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	BOOL Discard = FALSE;
+
+	if (nCode == HC_ACTION)
+	{
+		switch (wParam)
+		{
+		case WM_KEYDOWN:  case WM_SYSKEYDOWN:
+		case WM_KEYUP:    case WM_SYSKEYUP:
+			PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
+			Discard =
+				//Tab + Alt
+				((p->vkCode == VK_TAB) && ((p->flags & LLKHF_ALTDOWN) != 0))
+				//Esc + Alt
+				|| ((p->vkCode == VK_ESCAPE) && ((p->flags & LLKHF_ALTDOWN) != 0))
+				//Esc + Ctrl
+				|| ((p->vkCode == VK_ESCAPE) && ((GetKeyState(VK_CONTROL) & 0x8000) != 0))
+				//Ctrl + Space
+				|| (((GetKeyState(VK_CONTROL) & 0x8000) != 0) && (p->vkCode == VK_SPACE));
+			break;
+		}
+	}
+	return(Discard ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
+}
+
+void HookLoad()
+{
+	m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
+	CString loginfo;
+
+	if (NULL == m_hinstHookDll)
+	{
+		loginfo.Format(_T("Load MonitorDll.dll failed with error code = [%d] "), GetLastError());
+		AfxMessageBox(loginfo);
+		return;
+	}
+
+
+	typedef BOOL(WINAPI* LoadMonitor)(HWND hwnd, DWORD dwProcessId);
+	LoadMonitor loadMonitor = NULL;
+	loadMonitor = (LoadMonitor)::GetProcAddress(m_hinstHookDll, "HookLoad");
+	if (NULL == loadMonitor)
+	{
+		loginfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
+		AfxMessageBox(loginfo);
+	}
+	if (loadMonitor(m_hWnd, GetCurrentProcessId()))
+	{
+		loginfo.Format(_T("HOOK loaded successfully"));
+		AfxMessageBox(loginfo);
+	}
+	else
+	{
+		loginfo.Format(_T("HOOK loading failed!"));
+		AfxMessageBox(loginfo);
+	}
+}
+void HookUnload()
+{
+	CString logInfo;
+	if (m_hinstHookDll == NULL)
+	{
+		m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
+		if (NULL == m_hinstHookDll)
+		{
+			logInfo.Format(_T("Load MonitorDll.dll failed with error code = [%d]"), GetLastError());
+			AfxMessageBox(logInfo);
+			return;
+		}
+	}
+
+	typedef VOID(WINAPI* UnloadHook)();
+	UnloadHook unloadHook = NULL;
+	unloadHook = (UnloadHook)::GetProcAddress(m_hinstHookDll, "HookUnload");
+	if (NULL == unloadHook)
+	{
+		logInfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
+		AfxMessageBox(logInfo);
+		return;
+	}
+
+	unloadHook();
+
+}

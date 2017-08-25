@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <iostream> 
-#include <windows.h> 
-#include <atlstr.h>
-
+#include <Afxwin.h>
 
 // TODO:  在此处引用程序需要的其他头文件

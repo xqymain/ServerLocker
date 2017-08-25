@@ -1,4 +1,3 @@
-
 // ServerLockerDlg.cpp : 实现文件
 //
 
@@ -206,7 +205,6 @@ BOOL CServerLockerDlg::OnInitDialog()
 			//		RegCloseKey(hKey);
 			//		OnOK();
 		    //}
-				HookLoad();    // Load HOOK
 				ShowContent(hKey, regname, ValueName);
 				string stemp = sha512(content);
 				ConfirmPassword = SetPassword = stemp.c_str();
@@ -305,8 +303,6 @@ HCURSOR CServerLockerDlg::OnQueryDragIcon()
 void CServerLockerDlg::OnBnClickedSetlock()
 {
 	// TODO:Add the lock function handler code here
-	installhook();
-	HookLoad();
 	if (userstatus == 0)
 	{
 		GetDlgItemText(IDC_SET, SetPassword); // The password entered by the user is stored directly into SetPassword
@@ -403,7 +399,6 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		userstatus = 0;
 		ClipCursor(NULL);
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_SHOW);
-		HookUnload();    // Exit the window to uninstall HOOK
 	}
 }
 BOOL CServerLockerDlg::PreTranslateMessage(MSG * pMsg)
@@ -483,66 +478,6 @@ void CServerLockerDlg::OnClose()
 {
 	// TODO: Add the message handler code here and / or call the default value
 	CDialogEx::OnClose();
-}
-
-void CServerLockerDlg::HookLoad()
-{
-	m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
-	CString loginfo;
-
-	if (NULL == m_hinstHookDll)
-	{
-		loginfo.Format(_T("Load MonitorDll.dll failed with error code = [%d] "), GetLastError());
-		AfxMessageBox(loginfo);
-		return;
-	}
-
-
-	typedef BOOL(WINAPI* LoadMonitor)(HWND hwnd, DWORD dwProcessId);
-	LoadMonitor loadMonitor = NULL;
-	loadMonitor = (LoadMonitor)::GetProcAddress(m_hinstHookDll, "HookLoad");
-	if (NULL == loadMonitor)
-	{
-		loginfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
-		AfxMessageBox(loginfo);
-	}
-	if (loadMonitor(m_hWnd, GetCurrentProcessId()))
-	{
-		loginfo.Format(_T("HOOK loaded successfully"));
-		AfxMessageBox(loginfo);
-	}
-	else
-	{
-		loginfo.Format(_T("HOOK loading failed!"));
-		AfxMessageBox(loginfo);
-	}
-}
-void CServerLockerDlg::HookUnload()
-{
-	CString logInfo;
-	if (m_hinstHookDll == NULL)
-	{
-		m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
-		if (NULL == m_hinstHookDll)
-		{
-			logInfo.Format(_T("Load MonitorDll.dll failed with error code = [%d]"), GetLastError());
-			AfxMessageBox(logInfo);
-			return;
-		}
-	}
-
-	typedef VOID(WINAPI* UnloadHook)();
-	UnloadHook unloadHook = NULL;
-	unloadHook = (UnloadHook)::GetProcAddress(m_hinstHookDll, "HookUnload");
-	if (NULL == unloadHook)
-	{
-		logInfo.Format(_T("Get function HookLoad failed with error code = [%d]"), GetLastError());
-		AfxMessageBox(logInfo);
-		return;
-	}
-
-	unloadHook();
-
 }
 
 string CServerLockerDlg::sha512(const string str)

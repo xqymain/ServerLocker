@@ -4,12 +4,11 @@
 #include "stdafx.h"
 #include "SLDaemon.h"
 
-HINSTANCE m_hinstHookDll;    //    MonitorDll的实例句柄
-void HookLoad();            //    加载HOOK      
-BOOL installhook();
-void HookUnload();            //    卸载HOOK
+#pragma warning(disable:4996)
 
 using namespace std; 
+
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 int main(int argc, char *argv[])
 {
@@ -48,7 +47,7 @@ int main(int argc, char *argv[])
 	} while (true);				// 如果进程退出就再次执行方法 
 }
 
-BOOL installhook()
+BOOL CDaemon::installhook()
 {
 	HINSTANCE hins = AfxGetInstanceHandle();
 	HHOOK Hook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardProc, hins, 0);
@@ -81,7 +80,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	return(Discard ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
 }
 
-void HookLoad()
+void CDaemon::HookLoad()
 {
 	m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
 	CString loginfo;
@@ -113,10 +112,10 @@ void HookLoad()
 		AfxMessageBox(loginfo);
 	}
 }
-void HookUnload()
+void CDaemon::HookUnload()
 {
 	CString logInfo;
-	if (m_hinstHookDll == NULL)
+	if (CDaemon::m_hinstHookDll == NULL)
 	{
 		m_hinstHookDll = LoadLibrary(_T("MonitorDll.dll"));
 		if (NULL == m_hinstHookDll)

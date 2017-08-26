@@ -266,6 +266,8 @@ BOOL CServerLockerDlg::OnInitDialog()
 				// Write the new system settings to the user profile
 				SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
 				// Operation shell function implementation
+				now = time(0);
+				fprintf(fFile, "%d[%s] :L Shell_TrayWnd Status bar modified successfully.", now, runname);
 				::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_HIDE);
 				GetDlgItem(IDC_UNLOCK)->SetFocus();
 				//HANDLE hThread = CreateThread(NULL, 0, Fun, NULL, 0, NULL);
@@ -276,6 +278,9 @@ BOOL CServerLockerDlg::OnInitDialog()
 	else
 	{
 		MessageBox("You aren't an administrator!", "Error", MB_OK|MB_ICONERROR);
+		now = time(0);
+		fprintf(fFile, "%d[%s] Do not have administrator privileges,Return!", now, runname);
+		fclose(fFile);
 		return FALSE;
 		OnOK();
 	}
@@ -294,6 +299,8 @@ BOOL CServerLockerDlg::OnInitDialog()
 
 void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
+	now = time(0);
+	fprintf(fFile, "%d[%s] RUN::OnSysCommand()", now, runname);
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
 		CAboutDlg dlgAbout;
@@ -311,6 +318,8 @@ void CServerLockerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CServerLockerDlg::OnPaint()
 {
+	now = time(0);
+	fprintf(fFile, "%d[%s] RUN::OnPaint()", now, runname);
 	if (IsIconic())
 	{
 		CPaintDC dc(this); // Used to draw the device context
@@ -355,7 +364,8 @@ void CServerLockerDlg::OnBnClickedSetlock()
 			SetDlgItemText(IDC_MESSAGE, "Two passwords are inconsistent!\nCan not be successfully locked!");
 			SetDlgItemText(IDC_SET, "");
 			SetDlgItemText(IDC_SETAGIN, "");
-
+			now = time(0);
+			fprintf(fFile, "%d[%s] :Two passwords are inconsistent.", now, runname);
 			// Position the cursor directly into the input IDC_SET control
 			GetDlgItem(IDC_SET)->SetFocus();
 			return;
@@ -363,6 +373,8 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		if (SetPassword == "")// To determine whether it is empty password
 		{
 			SetDlgItemText(IDC_MESSAGE, "Password can not be blank!\nWas it intentional?");
+			now = time(0);
+			fprintf(fFile, "%d[%s] :Blank Password.", now, runname);
 			// Position the cursor directly into the input IDC_SET control
 			GetDlgItem(IDC_SET)->SetFocus();
 			return;
@@ -380,6 +392,9 @@ void CServerLockerDlg::OnBnClickedSetlock()
 			if (RegCreateKeyEx(hKey, regname, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
 			{
 				MessageBox("Insufficient permissions to open the registry!", "Error", MB_ICONERROR);
+				now = time(0);
+				fprintf(fFile, "%d[%s] :Insufficient permissions to open the registry,Return!", now, runname);
+				fclose(fFile);
 				OnOK();
 			}
 		}
@@ -388,6 +403,9 @@ void CServerLockerDlg::OnBnClickedSetlock()
 			if (RegSetValueEx(hKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 			{
 				MessageBox("Can not change the registry value!", "Error", MB_ICONERROR);
+				now = time(0);
+				fprintf(fFile, "%d[%s] :Can not change the registry value,Return!", now, runname);
+				fclose(fFile);
 				RegCloseKey(hKey);
 				OnOK();
 			}
@@ -408,12 +426,16 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, true, 0, SPIF_UPDATEINIFILE);
 		// Operation shell function implementation
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_HIDE);
+		now = time(0);
+		fprintf(fFile, "%d[%s] :L Shell_TrayWnd Status bar modified successfully.", now, runname);
 		GetDlgItem(IDC_UNLOCK)->SetFocus();
 		return;
 	}
 
 	if (userstatus == 1)   //Unlock
 	{
+		now = time(0);
+		fprintf(fFile, "%d[%s] :Has entered the wait unlock mode.", now, runname);
 		GetDlgItemText(IDC_UNLOCK, UnlockPassword);
 		char *temp = UnlockPassword.GetBuffer(UnlockPassword.GetLength());
 		string stemp = sha512(temp);
@@ -439,9 +461,13 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		SetDlgItemText(IDC_SETLOCK, "Achieve lock");
 		SetDlgItemText(IDC_UNLOCK, "");
 		GetDlgItem(IDC_EXITSYSTEM)->EnableWindow(true);
+		now = time(0);
+		fprintf(fFile, "%d[%s] :System is Unlocked.", now, runname);
 		userstatus = 0;
 		ClipCursor(NULL);
 		::ShowWindow(::FindWindow("Shell_TrayWnd", NULL), SW_SHOW);
+		now = time(0);
+		fprintf(fFile, "%d[%s] :U Shell_TrayWnd Status bar modified successfully.", now, runname);
 	}
 }
 BOOL CServerLockerDlg::PreTranslateMessage(MSG * pMsg)
@@ -469,12 +495,14 @@ void CServerLockerDlg::OnBnClickedExitsystem()
 int CServerLockerDlg::ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHAR *ReValueName)
 {
 	HKEY hKey = HKEY_LOCAL_MACHINE;
-	int i = 0; // Operation results:0==succeed
+	int i = 0; // Operation results : 0 == succeed
 	if (RegOpenKeyEx(hKey, ReSubKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueEx(hKey, ReValueName, NULL, &dwType, (unsigned char *)content, &dwLength) != ERROR_SUCCESS)
 		{
 			AfxMessageBox("Error: Can not query the relevant registry information");
+			now = time(0);
+			fprintf(fFile, "%d[%s:%s] :Can not query the relevant registry information.", now, runname,"ShowContent");
 			i = 1;
 		}
 		RegCloseKey(hKey);
@@ -482,6 +510,8 @@ int CServerLockerDlg::ShowContent(struct HKEY__*ReRootKey, TCHAR *ReSubKey, TCHA
 	else
 	{
 		AfxMessageBox("Error: unable to open the relevant hKey");
+		now = time(0);
+		fprintf(fFile, "%d[%s:%s] :unable to open the relevant hKey.", now, runname,"ShowContent");
 		i = 1;
 	}
 	return i;
@@ -490,6 +520,8 @@ BOOL CServerLockerDlg::installhook()
 {
 	HINSTANCE hins = AfxGetInstanceHandle();
 	HHOOK Hook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardProc, hins, 0);
+	now = time(0);
+	fprintf(fFile, "%d[%s] :Keyboard hook mounted successfully.", now, runname);
 	return (BOOL)Hook;
 }
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -540,6 +572,8 @@ string CServerLockerDlg::sha512(const string str)
 	//CString ctemp;
 	//ctemp = NewString.c_str();
 	//MessageBox(NULL, ctemp, "Message", MB_OK);
+	now = time(0);
+	fprintf(fFile, "%d[%s] :SHA512 hash calculation is complete.", now, runname);
 	return NewString;
 }
 

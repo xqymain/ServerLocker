@@ -19,12 +19,19 @@ int main()
 	if (!fin)
 	{
 		char *fileName = "status.log";
-			fFile = fopen(fileName, "w");
+		ifstream fin("status.log");
+		if (!fin)
+		{
+			MessageBox(_T("Can not create a new log file,Return!"), _T("Error!"), MB_ICONERROR);
+			return -1;
+		}
+		fFile = fopen(fileName, "w");
 	}
 	now = time(0);
 	fprintf(fFile, "%d[%s] :Started SLDaemon.exe.",now,runname);
 	now = time(0);
 	fprintf(fFile, "%d[%s] :Return 0.", now, runname);
+	fclose(fFile);
     return 0;
 }
 

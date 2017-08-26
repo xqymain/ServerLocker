@@ -1,4 +1,5 @@
 // SLDaemon.cpp : 定义控制台应用程序的入口点。
+// Daemon, used to guard the ServerLocker process.
 //
 
 #include "stdafx.h"
@@ -13,6 +14,7 @@ FILE *fFile;
 time_t now;
 CDaemon cd;
 char *runname = "SLDaemon";
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 int main(int argc, char *argv[])
@@ -21,6 +23,12 @@ int main(int argc, char *argv[])
 	if (!fin)
 	{
 		char *fileName = "status.log";
+		ifstream fin("status.log");
+		if (!fin)
+		{
+			MessageBox(_T("Can not create a new log file,Return!"), _T("Error!"), MB_ICONERROR);
+			return -1;
+		}
 		fFile = fopen(fileName, "w");
 	}
 	STARTUPINFO si;
@@ -70,6 +78,7 @@ int main(int argc, char *argv[])
 			now = time(0);
 			fprintf(fFile, "%d[%s] :Sub-process normally exits.", now, runname);
 			cd.HookUnload();
+			fclose(fFile);
 			return 0;
 		}
 		now = time(0);

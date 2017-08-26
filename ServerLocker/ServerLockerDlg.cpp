@@ -1,5 +1,5 @@
 // ServerLockerDlg.cpp : 实现文件
-//
+// 
 
 #include "stdafx.h"
 #include "ServerLocker.h"
@@ -34,6 +34,10 @@ TCHAR *KeyName;         // To Set the name of the Item
 TCHAR *ValueName;       // To Set the name of the Value
 LPBYTE SetContent_S;    // String Type
 CRect rct;              // Control the Screen Area
+FILE *fFile;
+time_t now;
+char *runname = "ServerLockerDlg";
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 // The CAboutDlg dialog box for the application "About" menu item
@@ -125,7 +129,22 @@ BOOL CServerLockerDlg::OnInitDialog()
 	// TODO: Add additional initialization code here
 	
 	// Raise permissions
+	
+	// Check Log File
+	ifstream fin("status.log");
 
+	// Build Log File
+	if (!fin)
+	{
+		char *fileName = "status.log";
+		ifstream fin("status.log");
+		if (!fin)
+		{
+			MessageBox("Can not create a new log file,Return!", "Error!", MB_ICONERROR);
+			return -1;
+		}
+		fFile = fopen(fileName, "w");
+	}
 	HANDLE hToken;
 	// Open access token for the current process
 	if(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
@@ -142,7 +161,8 @@ BOOL CServerLockerDlg::OnInitDialog()
 	// Modify privilege array
 	tkp.PrivilegeCount = 1;
 	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
+	now = time(0);
+	fprintf(fFile, "%d[%s] :Successful access to administrator privileges.", now, runname);
 	// Modify access token
 	if (AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, NULL, 0))
 	{
@@ -499,3 +519,7 @@ string CServerLockerDlg::sha512(const string str)
 	//MessageBox(NULL, ctemp, "Message", MB_OK);
 	return NewString;
 }
+
+
+
+// Thanks for your read!

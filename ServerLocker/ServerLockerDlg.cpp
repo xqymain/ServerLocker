@@ -220,9 +220,10 @@ BOOL CServerLockerDlg::OnInitDialog()
 					char *temp = "";
 					if (RegSetValueEx(subCKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 					{
+						MessageBox("unknown error(1)", "Error", MB_OK | MB_ICONERROR);
 						now = time(0);
 						fprintf(fFile, "%d[%s] :Unknown error,Return!", now, runname);
-						MessageBoxEx(NULL, "unknown error(1)", "Error", MB_OK | MB_ICONERROR, NULL);
+						fclose(fFile);
 						OnOK();
 					}
 				}
@@ -240,13 +241,15 @@ BOOL CServerLockerDlg::OnInitDialog()
 			//		RegCloseKey(hKey);
 			//		OnOK();
 		    //}
+				now = time(0);
+				fprintf(fFile, "%d[%s] :Found registry value,Lock!", now, runname);
+				fprintf(fFile, "%d[%s] :System is Locked!", now, runname);
 				ShowContent(hKey, regname, ValueName);
-				string stemp = sha512(content);
+				string stemp = content;
 				unsigned char *md5_sha512_passwd;
 				ConfirmPassword = SetPassword = stemp.c_str();
 				MD5(stemp.c_str, 65, md5_sha512_passwd);
 				now = time(0);
-				fprintf(fFile, "%d[%s] :System is locked.", now, runname);
 				fprintf(fFile, "%d[%s] :Password-SHA512-MD5:%s", now, runname, md5_sha512_passwd);
 				SetDlgItemText(IDC_MESSAGE, "Due to last unlocked\n Please verify your last password!");
 				SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1);

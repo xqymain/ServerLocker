@@ -4,6 +4,7 @@
 #include <string>
 #include <windows.h>
 #include "thirdparty/openssl/include/sha.h"
+#include "thirdparty/openssl/include/md5.h"
 
 #pragma comment(lib,"thirdparty/openssl/lib/libcrypto64MT.lib")
 

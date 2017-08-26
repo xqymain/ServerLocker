@@ -14,6 +14,12 @@ char *runname = "Run";
 
 int main()
 {
+	STARTUPINFO si;
+	DWORD returnCode;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
 	system("SLDaemon.exe ServerLocker.exe");
 	ifstream fin("status.log");
 	if (!fin)
@@ -22,7 +28,7 @@ int main()
 		ifstream fin("status.log");
 		if (!fin)
 		{
-			MessageBox(_T("Can not create a new log file,Return!"), _T("Error!"), MB_ICONERROR);
+			MessageBox(NULL,_T("Can not create a new log file,Return!"), _T("Error!"), MB_ICONERROR);
 			return -1;
 		}
 		fFile = fopen(fileName, "w");

@@ -179,26 +179,39 @@ BOOL CServerLockerDlg::OnInitDialog()
 			if (backnum)
 			{
 				CString output;
-				output.Format("You do not have permission to open the registry! Return code:%d", backnum);
+				output.Format("You do not have permission to open the registry! Return code:%d .", backnum);
 				MessageBox(output, "Error", MB_ICONERROR);
+				now = time(0);
+				fprintf(fFile, "%d[%s] :%s", now, runname,output.GetBuffer(0));
 				OnOK();
 			}
 			else {
+				now = time(0);
+				fprintf(fFile, "%d[%s] :Retry to open registry...", now, runname);
 				goto success;
 			}
 		}
 		else
 		{
-			success:
+		success:
+			now = time(0);
+			fprintf(fFile, "%d[%s] :Successfully open registry.", now, runname);
 			// Read the original key       
 			Buffer = sizeof(ValueData);
 			if (RegQueryValueEx(hKey, ValueName, 0, NULL, ValueData, &Buffer) != ERROR_SUCCESS)
 			{
 				// Not Found      
-				// Create a new SZ with a value of none      
+				now = time(0);
+				fprintf(fFile, "%d[%s] :Not Found registry value:%s .", now, runname, ValueName);
+				// Create a new SZ with a value of none
+				now = time(0);
+				fprintf(fFile, "%d[%s] :Creating a new registry value:%s ...", now, runname,ValueName);
 				if (RegCreateKey(hKey, regname, &subCKey) != ERROR_SUCCESS)
 				{
+					now = time(0);
+					fprintf(fFile, "%d[%s] :Failed to create registry key:%s Return!", now, runname, ValueName);
 					MessageBoxEx(NULL, "Can not create new registry value!", "Error", MB_OK | MB_ICONERROR, NULL);
+					fclose(fFile);
 					OnOK();
 				}
 				else
@@ -207,6 +220,8 @@ BOOL CServerLockerDlg::OnInitDialog()
 					char *temp = "";
 					if (RegSetValueEx(subCKey, ValueName, 0, REG_SZ, (const unsigned char *)temp, sizeof(temp)) != ERROR_SUCCESS)
 					{
+						now = time(0);
+						fprintf(fFile, "%d[%s] :Unknown error,Return!", now, runname);
 						MessageBoxEx(NULL, "unknown error(1)", "Error", MB_OK | MB_ICONERROR, NULL);
 						OnOK();
 					}
@@ -227,7 +242,12 @@ BOOL CServerLockerDlg::OnInitDialog()
 		    //}
 				ShowContent(hKey, regname, ValueName);
 				string stemp = sha512(content);
+				unsigned char *md5_sha512_passwd;
 				ConfirmPassword = SetPassword = stemp.c_str();
+				MD5(stemp.c_str, 65, md5_sha512_passwd);
+				now = time(0);
+				fprintf(fFile, "%d[%s] :System is locked.", now, runname);
+				fprintf(fFile, "%d[%s] :Password-SHA512-MD5:%s", now, runname, md5_sha512_passwd);
 				SetDlgItemText(IDC_MESSAGE, "Due to last unlocked\n Please verify your last password!");
 				SendDlgItemMessage(IDC_SET, EM_SETREADONLY, 1);
 				SendDlgItemMessage(IDC_SETAGIN, EM_SETREADONLY, 1);
@@ -502,7 +522,7 @@ void CServerLockerDlg::OnClose()
 
 string CServerLockerDlg::sha512(const string str)
 {
-	char buf[129]; 
+	char buf[64]; 
 	unsigned char hash[SHA512_DIGEST_LENGTH];
 	SHA512_CTX sha512;
 	SHA512_Init(&sha512);

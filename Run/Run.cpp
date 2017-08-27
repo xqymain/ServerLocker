@@ -20,7 +20,9 @@ int main()
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
-	system("SLDaemon.exe ServerLocker.exe");
+	CString cmd;
+	cmd.Format(L"SLDaemon.exe ServerLocker.exe");
+	LPWSTR lpCmd = cmd.GetBuffer();
 	ifstream fin("status.log");
 	if (!fin)
 	{
@@ -33,10 +35,29 @@ int main()
 		}
 		fFile = fopen(fileName, "w");
 	}
+	// 创建子进程，判断是否执行成功 
+	if (!CreateProcess(NULL, lpCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	{
+		now = time(0);
+		fprintf(fFile, "%Id[%s] :Failed to create sub-process, Return!", now, runname);
+		return -1;
+	}
+	fprintf(fFile, "%lld[%s] :Started SLDaemon.exe.", now, runname);
 	now = time(0);
-	fprintf(fFile, "%d[%s] :Started SLDaemon.exe.",now,runname);
+	// 进程执行成功，打印进程信息 
 	now = time(0);
-	fprintf(fFile, "%d[%s] :Return 0.", now, runname);
+	fprintf(fFile, "%Id[%s] :Process is successful and prints the process information.", now);
+	//cout << "以下是子进程的信息：" << endl;
+	now = time(0);
+	fprintf(fFile, "%Id[%s] :Process ID pi.dwProcessID %Id.", now, runname, pi.dwProcessId);
+	//cout << "进程ID pi.dwProcessID: " << pi.dwProcessId << endl;
+	now = time(0);
+	fprintf(fFile, "%Id[%s] :dwThread ID pi.dwThreadId %Id.", now, runname, pi.dwThreadId);
+	//cout << "线程ID pi.dwThreadID : " << pi.dwThreadId << endl;
+	now = time(0);
+	fprintf(fFile, "%Id[%s] :Output is finished!", now, runname);
+	now = time(0);
+	fprintf(fFile, "%lld[%s] :Return 0.", now, runname);
 	fclose(fFile);
     return 0;
 }

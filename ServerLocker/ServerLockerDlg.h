@@ -10,7 +10,6 @@
 
 #pragma once
 
-
 // CServerLockerDlg ¶Ô»°¿ò
 class CServerLockerDlg : public CDialogEx
 {

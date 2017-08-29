@@ -1,0 +1,31 @@
+// ServerLocker
+
+这个项目为Windows二级加锁系统，可以在您离开的时候保护您的计算机。
+现在在持续更新，添加更多安全功能。
+本程序需要依赖OpenSSL库，暂时只支持x64系统。
+为了为x64系统提供完成的功能，我使用了以下架构：
+
+Run(x86) -> SLDaemon(x86)<-(X86 HOOK) -> ServerLock(x64) -> 直接操作系统
+
+如果没有意外，项目将会停更至10.1。原因有两个：一是为了更好的构想下一个大版本更新；二是因为学业因素。有任何问题仍可以联系我。为了表达歉意，我们选择暂时开源，谢谢您的理解！
+
+下次大版本更新可能会加入语音识别和启用注册表保存密码，敬请期待。
+
+
+
+This item is a Windows secondary locking system that protects your computer when you leave.
+Now continue to update, add more security features.
+The program needs to rely on OpenSSL library, temporarily only support x64 system.
+In order to provide the finished functionality for the x64 system, I used the following architecture:
+
+Run (x86) -> SLDaemon (x86) <-(X86 HOOK) -> ServerLock (x64) -> Direct Operating System
+
+If there is no accident, the project will stop to 10.1. There are two reasons: First, in order to better imagine the next big version of the update; Second, because of academic factors. Have any questions can still contact me. In order to express apology, we choose to temporarily open source, thank you for your understanding!
+
+The next major update may add voice recognition and enable the registry to save the password, so stay tuned.
+
+
+Last Version: 0.1b
+
+
+THANKS FOR YOUR SUPPORT!!!

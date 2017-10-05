@@ -1,19 +1,62 @@
-// Run.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// Run.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 // For run ServerLocker System
+// Pass TEST
 //
+
+
 
 #include "stdafx.h"
 
+
+
+// Hide command prompt
+
 #pragma comment(linker,"/subsystem:\"windows\"  /entry:\"mainCRTStartup\"" )
+
+
 
 using namespace std;
 
 FILE *fFile;
 time_t now;
 char *runname = "Run";
+int li;
+char *lch;
+struct tm *newtime;
+char tmpbuf[128];
+
+void LogCreate()
+{
+	char *fileName = "status.log";
+	ifstream fin(fileName);
+	if (!fin)
+	{
+		ofstream fout(fileName);
+		ifstream finn(fileName);
+		if (!finn)
+		{
+			MessageBox(NULL, _T("Can not create a new log file,Return!"), _T("Error!"), MB_ICONERROR);
+			exit(0);
+		}
+		fFile = fopen(fileName, "w");
+	}
+	fFile = fopen(fileName, "w");
+}
+
+void ThreadLog()
+{
+	now = time(0);
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+	if (li == 0)
+		fprintf(fFile, "%s[%s] :%s\n", tmpbuf, runname, lch);
+	if (li == 1)
+		fprintf(fFile, "%s[%s] RUN::%s\n", tmpbuf, runname, lch);
+	return;}
 
 int main()
 {
+	LogCreate();
 	STARTUPINFO si;
 	DWORD returnCode;
 	PROCESS_INFORMATION pi;
@@ -23,42 +66,54 @@ int main()
 	CString cmd;
 	cmd.Format(L"SLDaemon.exe ServerLocker.exe");
 	LPWSTR lpCmd = cmd.GetBuffer();
-	ifstream fin("status.log");
-	if (!fin)
-	{
-		char *fileName = "status.log";
-		ifstream fin("status.log");
-		if (!fin)
-		{
-			MessageBox(NULL,_T("Can not create a new log file,Return!"), _T("Error!"), MB_ICONERROR);
-			return -1;
-		}
-		fFile = fopen(fileName, "w");
-	}
-	// ´´½¨×Ó½ø³Ì£¬ÅĞ¶ÏÊÇ·ñÖ´ĞĞ³É¹¦ 
+	// åˆ›å»ºå­è¿›ç¨‹ï¼Œåˆ¤æ–­æ˜¯å¦æ‰§è¡ŒæˆåŠŸ 
+
 	if (!CreateProcess(NULL, lpCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+
 	{
-		now = time(0);
-		fprintf(fFile, "%Id[%s] :Failed to create sub-process, Return!", now, runname);
+		HANDLE h; //çº¿ç¨‹å¥æŸ„
+		li = 0;
+		lch = (char*)"Creating sub-thread failed,Return!";
+		h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadLog, NULL, 1, 0); //åˆ›å»ºå­çº¿ç¨‹
+		ResumeThread(h);  //å¯åŠ¨å­çº¿ç¨‹
 		return -1;
 	}
-	fprintf(fFile, "%lld[%s] :Started SLDaemon.exe.", now, runname);
 	now = time(0);
-	// ½ø³ÌÖ´ĞĞ³É¹¦£¬´òÓ¡½ø³ÌĞÅÏ¢ 
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128,"%D %H %M %S", newtime);
+	fprintf(fFile, "%s[%s] :Started SLDaemon.exe.\n", tmpbuf, runname);
+	// è¿›ç¨‹æ‰§è¡ŒæˆåŠŸï¼Œæ‰“å°è¿›ç¨‹ä¿¡æ¯ 
+
 	now = time(0);
-	fprintf(fFile, "%Id[%s] :Process is successful and prints the process information.", now);
-	//cout << "ÒÔÏÂÊÇ×Ó½ø³ÌµÄĞÅÏ¢£º" << endl;
+
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+	fprintf(fFile, "%s[%s] :Process is successful and prints the process information.\n", tmpbuf,runname);
+	//cout << "ä»¥ä¸‹æ˜¯å­è¿›ç¨‹çš„ä¿¡æ¯ï¼š" << endl;
+
 	now = time(0);
-	fprintf(fFile, "%Id[%s] :Process ID pi.dwProcessID %Id.", now, runname, pi.dwProcessId);
-	//cout << "½ø³ÌID pi.dwProcessID: " << pi.dwProcessId << endl;
+
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+	fprintf(fFile, "%s[%s] :Process ID pi.dwProcessID %Id.\n", tmpbuf, runname, pi.dwProcessId);
+	//cout << "è¿›ç¨‹ID pi.dwProcessID: " << pi.dwProcessId << endl;
+
 	now = time(0);
-	fprintf(fFile, "%Id[%s] :dwThread ID pi.dwThreadId %Id.", now, runname, pi.dwThreadId);
-	//cout << "Ïß³ÌID pi.dwThreadID : " << pi.dwThreadId << endl;
+
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+	fprintf(fFile, "%s[%s] :dwThread ID pi.dwThreadId %Id.\n", tmpbuf, runname, pi.dwThreadId);
+	//cout << "çº¿ç¨‹ID pi.dwThreadID : " << pi.dwThreadId << endl;
+
 	now = time(0);
-	fprintf(fFile, "%Id[%s] :Output is finished!", now, runname);
+
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+	fprintf(fFile, "%s[%s] :Output is finished!\n", tmpbuf, runname);
 	now = time(0);
-	fprintf(fFile, "%lld[%s] :Return 0.", now, runname);
+	newtime = localtime(&now);
+	strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+	fprintf(fFile, "%s[%s] :Return 0.\n", tmpbuf, runname);
 	fclose(fFile);
     return 0;
 }
-

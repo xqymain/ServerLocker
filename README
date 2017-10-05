@@ -1,6 +1,10 @@
 ServerLocker
 
-笨项目为Windows二级加锁系统，可以在您离开的时候保护您的计算机。
+Warning: Please use the latest version!!!
+Warning: Please use the latest version!!!
+Warning: Please use the latest version!!!
+
+此项目为Windows二级加锁系统，可以在您离开的时候保护您的计算机。
 本项目遵循GPL3.0开源协议，归YxomTech所有，
 现在在持续更新，添加更多安全功能。
 本程序需要依赖OpenSSL库，暂时只支持x64系统。

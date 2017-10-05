@@ -1,4 +1,4 @@
-// SLDaemon.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// SLDaemon.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 // Daemon, used to guard the ServerLocker process.
 //
 
@@ -31,9 +31,10 @@ int main(int argc, char *argv[])
 		}
 		fFile = fopen(fileName, "w");
 	}
+	fFile = fopen(fileName, "w");    // 20171005 Fixed
 	STARTUPINFO si;
 	DWORD returnCode;
-	PROCESS_INFORMATION pi;		//½ø³ÌĞÅÏ¢ 
+	PROCESS_INFORMATION pi;		//è¿›ç¨‹ä¿¡æ¯ 
 	CString cmd;
 	cmd.Format(L"cmd /c %s", argv[1]);
 	LPWSTR lpCmd = cmd.GetBuffer();
@@ -43,34 +44,34 @@ int main(int argc, char *argv[])
 	cd.installhook();
 	cd.HookLoad();
 	do {
-		// ´´½¨×Ó½ø³Ì£¬ÅĞ¶ÏÊÇ·ñÖ´ĞĞ³É¹¦ 
+		// åˆ›å»ºå­è¿›ç¨‹ï¼Œåˆ¤æ–­æ˜¯å¦æ‰§è¡ŒæˆåŠŸ 
 		if (!CreateProcess(NULL, lpCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 		{
 			now = time(0);
 			fprintf(fFile, "%Id[%s] :Failed to create sub-process, Return!",now,runname);
 			return -1;
 		}
-		// ½ø³ÌÖ´ĞĞ³É¹¦£¬´òÓ¡½ø³ÌĞÅÏ¢ 
+		// è¿›ç¨‹æ‰§è¡ŒæˆåŠŸï¼Œæ‰“å°è¿›ç¨‹ä¿¡æ¯ 
 		now = time(0);
 		fprintf(fFile, "%Id[%s] :Process is successful and prints the process information.", now);
-		//cout << "ÒÔÏÂÊÇ×Ó½ø³ÌµÄĞÅÏ¢£º" << endl;
+		//cout << "ä»¥ä¸‹æ˜¯å­è¿›ç¨‹çš„ä¿¡æ¯ï¼š" << endl;
 		now = time(0);
 		fprintf(fFile, "%Id[%s] :Process ID pi.dwProcessID %Id.", now, runname, pi.dwProcessId);
-		//cout << "½ø³ÌID pi.dwProcessID: " << pi.dwProcessId << endl;
+		//cout << "è¿›ç¨‹ID pi.dwProcessID: " << pi.dwProcessId << endl;
 		now = time(0);
 		fprintf(fFile, "%Id[%s] :dwThread ID pi.dwThreadId %Id.", now, runname, pi.dwThreadId);
-		//cout << "Ïß³ÌID pi.dwThreadID : " << pi.dwThreadId << endl;
+		//cout << "çº¿ç¨‹ID pi.dwThreadID : " << pi.dwThreadId << endl;
 		now = time(0);
 		fprintf(fFile, "%Id[%s] :Output is finished!", now, runname);
-		// µÈ´ıÖªµÀ×Ó½ø³ÌÍË³ö... 
-		WaitForSingleObject(pi.hProcess, INFINITE);// ¼ì²â½ø³ÌÊÇ·ñÍ£Ö¹ 
-												   // WaitForSingleObject()º¯Êı¼ì²é¶ÔÏóµÄ×´Ì¬£¬Èç¹ûÊÇÎ´È·¶¨µÄÔòµÈ´ıÖÁ³¬Ê± 
-												   // ×Ó½ø³ÌÍË³ö 
-		/*cout << "×Ó½ø³ÌÒÑ¾­ÍË³ö" << endl;*/
-		//»ñÈ¡×Ó½ø³ÌµÄ·µ»ØÖµ
+		// ç­‰å¾…çŸ¥é“å­è¿›ç¨‹é€€å‡º... 
+		WaitForSingleObject(pi.hProcess, INFINITE);// æ£€æµ‹è¿›ç¨‹æ˜¯å¦åœæ­¢ 
+												   // WaitForSingleObject()å‡½æ•°æ£€æŸ¥å¯¹è±¡çš„çŠ¶æ€ï¼Œå¦‚æœæ˜¯æœªç¡®å®šçš„åˆ™ç­‰å¾…è‡³è¶…æ—¶ 
+												   // å­è¿›ç¨‹é€€å‡º 
+		/*cout << "å­è¿›ç¨‹å·²ç»é€€å‡º" << endl;*/
+		//è·å–å­è¿›ç¨‹çš„è¿”å›å€¼
 		GetExitCodeProcess(pi.hProcess, &returnCode);
 		/*std::cout << "process return code:" << returnCode << std::endl;*/
-		// ¹Ø±Õ½ø³ÌºÍ¾ä±ú 
+		// å…³é—­è¿›ç¨‹å’Œå¥æŸ„ 
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		if (returnCode == 0)
@@ -83,7 +84,7 @@ int main(int argc, char *argv[])
 		}
 		now = time(0);
 		fprintf(fFile, "%Id[%s] :Sub-process abnormal exit.", now, runname);
-	} while (true);				// Èç¹û½ø³ÌÍË³ö¾ÍÔÙ´ÎÖ´ĞĞ·½·¨ 
+	} while (true);				// å¦‚æœè¿›ç¨‹é€€å‡ºå°±å†æ¬¡æ‰§è¡Œæ–¹æ³• 
 }
 
 BOOL CDaemon::installhook()

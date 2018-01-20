@@ -1,4 +1,4 @@
-﻿// ServerLockerDlg.cpp : 实现文件
+// ServerLockerDlg.cpp : 实现文件
 //
 
 #include "stdafx.h"
@@ -459,7 +459,7 @@ void CServerLockerDlg::OnBnClickedSetlock()
                     
 		    attv++;
 			
-		    fprintf(fFile, "%s[%s] :Setted ATTV count.\n", tmpbuf, runname);
+		    fprintf(fFile, "%s[%s] :Modfied ATTV count.\n", tmpbuf, runname);
 		}
 		else if(attn == 10 && attv==1)
 		{
@@ -474,7 +474,7 @@ void CServerLockerDlg::OnBnClickedSetlock()
                     
 		    attv++;
 			
-		    fprintf(fFile, "%s[%s] :Setted ATTV count.\n", tmpbuf, runname);
+		    fprintf(fFile, "%s[%s] :Modfied ATTV count.\n", tmpbuf, runname);
 		}
 		else if(attn > 10 && attv >= 2)
 		{
@@ -489,7 +489,7 @@ void CServerLockerDlg::OnBnClickedSetlock()
                     
 		    attv++;
 			
-		    fprintf(fFile, "%s[%s] :Setted ATTV count.\n", tmpbuf, runname);
+		    fprintf(fFile, "%s[%s] :Modfied ATTV count.\n", tmpbuf, runname);
 		}
 		GetDlgItemText(IDC_UNLOCK, UnlockPassword);
 		char *temp = UnlockPassword.GetBuffer(UnlockPassword.GetLength());
@@ -497,8 +497,13 @@ void CServerLockerDlg::OnBnClickedSetlock()
 		UnlockPassword = stemp.c_str();
 		if (SetPassword != UnlockPassword)
 		{
+			attn++;
+			now = time(0);
+ 		        newtime = localtime(&now);
+		        strftime(tmpbuf, 128, "%D %H %M %S", newtime);
 			SetDlgItemText(IDC_MESSAGE, "Unlock password input error!\nUnable to unlock!");
 			SetDlgItemText(IDC_UNLOCK, "");
+			fprintf(fFile, "%s[%s] :Unlock Password wrong, modfied ATTN count.\n", tmpbuf, runname);
 			GetDlgItem(IDC_UNLOCK)->SetFocus(); // Cursor positioning
 			return;
 		}

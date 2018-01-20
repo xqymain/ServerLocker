@@ -23,7 +23,9 @@ CString SetPassword;
 CString ConfirmPassword;
 CString UnlockPassword;
 std::wstring strValue;
-int ru=0;
+int ru = 0;
+int attn = 0; // Number of attempts
+int attv = 0;
 char *ch;
 char content[256];      // Query the contents of the registry key
 DWORD dwType = REG_SZ;  // Define Data Type
@@ -237,11 +239,11 @@ BOOL CServerLockerDlg::OnInitDialog()
 			else
 			{
 			    //Found       
-			//	//改变值
+			//	// Modify Value
 			//	DWORD temp = 0;
 			//	if (RegSetValueEx(hKey, ValueName, 0, REG_DWORD, (LPBYTE)&temp, sizeof(DWORD)) != ERROR_SUCCESS)
 			//	{
-			//		MessageBox("无法更改注册表值！", "错误", MB_ICONERROR);
+			//		MessageBox("Can't modify Regedit Value!", "ERROR!", MB_ICONERROR);
 			//		RegCloseKey(hKey);
 			//		OnOK();
 		    //}
@@ -289,7 +291,7 @@ BOOL CServerLockerDlg::OnInitDialog()
 		OnOK();
 	}
 
-	////重启
+	////Reboot
 	//if (!ExitWindowsEx(EWX_REBOOT | EWX_FORCE, 0))
 	//{
 	//	return FALSE;
@@ -362,7 +364,7 @@ void CServerLockerDlg::OnBnClickedSetlock()
 {
 	now = time(0);
 	fprintf(fFile, "%Id[%s] RUN::OnBnClickedSetlock()", now, runname);
-	// TODO:Add the lock function handler code here
+	// TODO: Add the lock function handler code here
 	if (userstatus == 0)
 	{
 		GetDlgItemText(IDC_SET, SetPassword); // The password entered by the user is stored directly into SetPassword
@@ -444,6 +446,51 @@ void CServerLockerDlg::OnBnClickedSetlock()
 	{
 		now = time(0);
 		fprintf(fFile, "%Id[%s] :Has entered the wait unlock mode.", now, runname);
+		if(attn == 5 && attv == 0)
+	 	{
+		    SetDlgItemText(IDC_MESSAGE, "Try too many times, please try again later!");
+		    SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
+		    fprintf(fFile, "%s[%s] :The number of attempts to unlock exceeds the threshold. Lock five minutes.\n", tmpbuf, runname);
+		    Sleep(300000);
+                    SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
+		    now = time(0);
+ 		    newtime = localtime(&now);
+		    strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+                    
+		    attv++;
+			
+		    fprintf(fFile, "%s[%s] :Setted ATTV count.\n", tmpbuf, runname);
+		}
+		else if(attn == 10 && attv==1)
+		{
+	            SetDlgItemText(IDC_MESSAGE, "Try too many times, please try again later!");
+		    SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
+		    fprintf(fFile, "%s[%s] :The number of attempts to unlock exceeds the threshold. Lock thirty minutes.\n", tmpbuf, runname);
+		    Sleep(1800000);
+                    SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
+		    now = time(0);
+ 		    newtime = localtime(&now);
+		    strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+                    
+		    attv++;
+			
+		    fprintf(fFile, "%s[%s] :Setted ATTV count.\n", tmpbuf, runname);
+		}
+		else if(attn > 10 && attv >= 2)
+		{
+	            SetDlgItemText(IDC_MESSAGE, "Try too many times, please try again later!");
+		    SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 0);
+		    fprintf(fFile, "%s[%s] :The number of attempts to unlock exceeds the threshold. Lock three hours.\n", tmpbuf, runname);
+		    Sleep(10800000);
+                    SendDlgItemMessage(IDC_UNLOCK, EM_SETREADONLY, 1);
+		    now = time(0);
+ 		    newtime = localtime(&now);
+		    strftime(tmpbuf, 128, "%D %H %M %S", newtime);
+                    
+		    attv++;
+			
+		    fprintf(fFile, "%s[%s] :Setted ATTV count.\n", tmpbuf, runname);
+		}
 		GetDlgItemText(IDC_UNLOCK, UnlockPassword);
 		char *temp = UnlockPassword.GetBuffer(UnlockPassword.GetLength());
 		string stemp = sha512(temp);

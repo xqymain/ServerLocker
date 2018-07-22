@@ -17,28 +17,28 @@ using namespace std;
 
 
 // Declare global variables
-CBrush m_bkbrush;
+int ru = 0;
+int attn = 0; // Number of attempts
+int attv = 0;
 int userstatus = 0;    // Unlocked=0 Locked=1
 CString SetPassword;
 CString ConfirmPassword;
 CString UnlockPassword;
-std::wstring strValue;
-int ru = 0;
-int attn = 0; // Number of attempts
-int attv = 0;
-char *ch;
-char content[256];      // Query the contents of the registry key
-DWORD dwType = REG_SZ;  // Define Data Type
-DWORD dwLength = 256;
-struct HKEY__*RootKey;  // Registry Key name
+CBrush m_bkbrush;
 TCHAR *SubKey;          // To open the address of the registry key
 TCHAR *KeyName;         // To Set the name of the Item
 TCHAR *ValueName;       // To Set the name of the Value
-LPBYTE SetContent_S;    // String Type
+std::wstring strValue;
+char *ch;
+char content[256];      // Query the contents of the registry key
+char *runname = "ServerLocker";
+DWORD dwType = REG_SZ;  // Define Data Type
+DWORD dwLength = 256;
 CRect rct;              // Control the Screen Area
 FILE *fFile;
 time_t now;
-char *runname = "ServerLocker";
+struct HKEY__*RootKey;  // Registry Key name
+LPBYTE SetContent_S;    // String Type
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
